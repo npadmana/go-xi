@@ -11,7 +11,13 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	for _,p1 := range parr {
+	
+	parr.Normalize()
+	
+	for _,p1 := range parr.Data {
 		fmt.Println(p1)
 	}
+	
+	fmt.Println("BoxDim=", parr.BoxDim)
+	fmt.Println("Origin=", parr.Origin)
 }

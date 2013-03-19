@@ -5,23 +5,50 @@ package particle
 import (
 	"fmt"
 	"github.com/npadmana/npgo/textio"
-	//"strings"
+	"math"
 )
 
+type Pos [3]float64
+
+func Min(p1, p2 Pos) (m Pos) {
+	for i := range p1 {
+		m[i] = math.Min(p1[i], p2[i])
+	}
+	return
+}
+
+func Max(p1, p2 Pos) (m Pos) {
+	for i := range p1 {
+		m[i] = math.Max(p1[i], p2[i])
+	}
+	return
+}
+
+func Diff(p1, p2 Pos) (m Pos) {
+	for i := range p1 {
+		m[i] = p1[i] - p2[i]
+	}
+	return
+}
+
 type Particle struct {
-	Pos    [3]float64
-	Weight float64
+	X Pos
+	W float64
 }
 
 func (p Particle) String() string {
-	return fmt.Sprintf("(%g,%g,%g),%g", p.Pos[0], p.Pos[1], p.Pos[2], p.Weight)
+	return fmt.Sprintf("(%g,%g,%g),%g", p.X[0], p.X[1], p.X[2], p.W)
 }
 
 // ParticleArr is a storage container for Particles
-type ParticleArr []Particle
+type Particles struct {
+	Data   []Particle
+	BoxDim Pos
+	Origin Pos
+}
 
-func NewFromXYZW(fn string) (ParticleArr, error) {
-	var parr ParticleArr
+func NewFromXYZW(fn string) (*Particles, error) {
+	var parr Particles
 	var err error
 	var p1 Particle
 
@@ -29,14 +56,32 @@ func NewFromXYZW(fn string) (ParticleArr, error) {
 	go textio.FileLineReader(fn, out)
 	for l1 := range out {
 		if l1.Err != nil {
-			return nil, l1.Err
+			return &Particles{}, l1.Err
 		}
-		_, err = fmt.Sscan(l1.Str, &p1.Pos[0], &p1.Pos[1], &p1.Pos[2], &p1.Weight)
-		parr = append(parr, p1)
+		_, err = fmt.Sscan(l1.Str, &p1.X[0], &p1.X[1], &p1.X[2], &p1.W)
+		parr.Data = append(parr.Data, p1)
 		if err != nil {
-			return nil, err
+			return &Particles{}, err
 		}
 	}
 
-	return parr, nil
+	return &parr, nil
+}
+
+func (p *Particles) Normalize() {
+	minpos := Pos{math.MaxFloat64, math.MaxFloat64, math.MaxFloat64}
+	maxpos := Pos{-math.MaxFloat64, -math.MaxFloat64, -math.MaxFloat64}
+
+	for _, p1 := range p.Data {
+		minpos = Min(minpos, p1.X)
+		maxpos = Max(maxpos, p1.X)
+	}
+
+	p.Origin = Diff(Pos{0, 0, 0}, minpos)
+	p.BoxDim = Diff(maxpos, minpos)
+
+	for i := range p.Data {
+		p.Data[i].X = Diff(p.Data[i].X, minpos)
+	}
+
 }
