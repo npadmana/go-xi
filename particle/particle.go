@@ -21,7 +21,7 @@ func (p Particle) String() string {
 type Particles struct {
 	Data   []Particle
 	BoxDim vector.Vector3D
-	Origin vector.Vector3D
+	BoxMin vector.Vector3D
 }
 
 func NewFromXYZW(fn string) (*Particles, error) {
@@ -45,24 +45,20 @@ func NewFromXYZW(fn string) (*Particles, error) {
 	return &parr, nil
 }
 
-func (p *Particles) Normalize() {
+func (p *Particles) SetBox() {
 	if len(p.Data) == 0 {
 		return
 	}
 
-	minpos := p.Data[0].X
+	p.BoxMin = p.Data[0].X
 	maxpos := p.Data[0].X
 
 	for _, p1 := range p.Data {
-		minpos = minpos.Min(p1.X)
+		p.BoxMin = p.BoxMin.Min(p1.X)
 		maxpos = maxpos.Max(p1.X)
 	}
 
-	p.Origin = p.Origin.Sub(minpos)
-	p.BoxDim = maxpos.Sub(minpos)
+	p.BoxDim = maxpos.Sub(p.BoxMin)
 
-	for i := range p.Data {
-		p.Data[i].X = p.Data[i].X.Sub(minpos)
-	}
 
 }
