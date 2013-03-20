@@ -58,7 +58,7 @@ func (p *Particles) Normalize() {
 		maxpos = maxpos.Max(p1.X)
 	}
 
-	p.Origin = vector.Vector3D{0,0,0}.Sub(minpos)
+	p.Origin = p.Origin.Sub(minpos)
 	p.BoxDim = maxpos.Sub(minpos)
 
 	for i := range p.Data {
