@@ -5,34 +5,11 @@ package particle
 import (
 	"fmt"
 	"github.com/npadmana/npgo/textio"
-	"math"
+	"github.com/npadmana/npgo/vector"
 )
 
-type Pos [3]float64
-
-func Min(p1, p2 Pos) (m Pos) {
-	for i := range p1 {
-		m[i] = math.Min(p1[i], p2[i])
-	}
-	return
-}
-
-func Max(p1, p2 Pos) (m Pos) {
-	for i := range p1 {
-		m[i] = math.Max(p1[i], p2[i])
-	}
-	return
-}
-
-func Diff(p1, p2 Pos) (m Pos) {
-	for i := range p1 {
-		m[i] = p1[i] - p2[i]
-	}
-	return
-}
-
 type Particle struct {
-	X Pos
+	X vector.Vector3D
 	W float64
 }
 
@@ -43,8 +20,8 @@ func (p Particle) String() string {
 // ParticleArr is a storage container for Particles
 type Particles struct {
 	Data   []Particle
-	BoxDim Pos
-	Origin Pos
+	BoxDim vector.Vector3D
+	Origin vector.Vector3D
 }
 
 func NewFromXYZW(fn string) (*Particles, error) {
@@ -69,19 +46,23 @@ func NewFromXYZW(fn string) (*Particles, error) {
 }
 
 func (p *Particles) Normalize() {
-	minpos := Pos{math.MaxFloat64, math.MaxFloat64, math.MaxFloat64}
-	maxpos := Pos{-math.MaxFloat64, -math.MaxFloat64, -math.MaxFloat64}
-
-	for _, p1 := range p.Data {
-		minpos = Min(minpos, p1.X)
-		maxpos = Max(maxpos, p1.X)
+	if len(p.Data) == 0 {
+		return
 	}
 
-	p.Origin = Diff(Pos{0, 0, 0}, minpos)
-	p.BoxDim = Diff(maxpos, minpos)
+	minpos := p.Data[0].X
+	maxpos := p.Data[0].X
+
+	for _, p1 := range p.Data {
+		minpos = minpos.Min(p1.X)
+		maxpos = maxpos.Max(p1.X)
+	}
+
+	p.Origin = vector.Vector3D{0,0,0}.Sub(minpos)
+	p.BoxDim = maxpos.Sub(minpos)
 
 	for i := range p.Data {
-		p.Data[i].X = Diff(p.Data[i].X, minpos)
+		p.Data[i].X = p.Data[i].X.Sub(minpos)
 	}
 
 }
