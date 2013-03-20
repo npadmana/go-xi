@@ -5,7 +5,7 @@ package particle
 import (
 	"fmt"
 	"github.com/npadmana/npgo/textio"
-	"github.com/npadmana/npgo/vector"
+	"github.com/npadmana/npgo/math/vector"
 )
 
 type Particle struct {
