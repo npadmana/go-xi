@@ -1,6 +1,6 @@
 all :
 	go install -v ./particle
-	go install -v ./twopt
+	go install -v ./twopt/...
 	
 
 clean :
