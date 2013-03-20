@@ -9,7 +9,7 @@ type DistFunc func(p1, p2 vector.Vector3D) []float64
 
 func SMu(p1, p2 vector.Vector3D) []float64 {
 	var s2, l2, sl, s1, l1, mu float64
-	for i := 0; i < 2; i++ {
+	for i := 0; i < 3; i++ {
 		s1 = p1[i] - p2[i]
 		l1 = 0.5*(p1[i]+p2[i])
 		s2 += s1 * s1
