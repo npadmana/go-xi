@@ -1,0 +1,6 @@
+all :
+	find . -name *.go | xargs -n 1 perl -pi -e 's|github.com/npadmana/go-xi/||g' 
+	gccgo -c -O3 -march=native -o utils.o utils/*.go
+	gccgo -c -O3 -march=native -o mesh.o mesh/*.go
+	gccgo -c -O3 -march=native -o twopt.o twopt/*.go
+	gccgo -O3 -march=native -o do-smu twopt/do-smu/do-smu.go utils.o mesh.o twopt.o
