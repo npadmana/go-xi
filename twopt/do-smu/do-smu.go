@@ -22,6 +22,7 @@ type Worker struct {
 
 type Foreman struct {
 	Workers []*Worker
+	LastWorker int
 }
 
 func NewForeman(n int) (f *Foreman) {
@@ -30,6 +31,7 @@ func NewForeman(n int) (f *Foreman) {
 	for i := range f.Workers {
 		f.Workers[i] = NewWorker()
 	}
+	f.LastWorker = 0
 	return
 }
 
@@ -44,13 +46,13 @@ func (f *Foreman) EndWork() {
 
 func (f *Foreman) SubmitJob(j Job) {
 	ok := false
-	i := 0
 	for !ok {
 		select {
-		case f.Workers[i].Work <- j:
+		case f.Workers[f.LastWorker].Work <- j:
 			ok = true
-		default:
-			i = (i + 1) % len(f.Workers)
+			f.LastWorker = (f.LastWorker + 1) % len(f.Workers)
+		//default:
+		//	i = (i + 1) % len(f.Workers)
 		}
 	}
 }
