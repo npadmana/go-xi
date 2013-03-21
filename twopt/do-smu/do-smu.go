@@ -19,6 +19,41 @@ type Worker struct {
 	Done chan bool
 }
 
+type Foreman struct {
+	Workers []*Worker
+}
+
+func NewForeman(n int) (f *Foreman) {
+	f = new(Foreman)
+	f.Workers = make([]*Worker, n)
+	for i := range f.Workers {
+		f.Workers[i] = NewWorker()
+	}
+	return
+}
+
+func (f *Foreman) EndWork() {
+	for _, w := range f.Workers {
+		close(w.Work)
+	}
+	for _, w := range f.Workers {
+		<-w.Done
+	}
+}
+
+func (f *Foreman) SubmitJob(j Job) {
+	ok := false
+	i := 0
+	for !ok {
+		select {
+		case f.Workers[i].Work <- j:
+			ok = true
+		default:
+			i = (i + 1) % len(f.Workers)
+		}
+	}
+}
+
 func NewWorker() (w *Worker) {
 	w = new(Worker)
 	w.H = utils.NewUniform([]int{5, 5}, []float64{0, 0}, []float64{200, 1})
@@ -48,30 +83,26 @@ func main() {
 	m := mesh.New(p, 50.0)
 	fmt.Println("Mesh created")
 
-	w1 := NewWorker()
-	w2 := NewWorker()
+	fore := NewForeman(8)
 	c1 := m.LoopAll()
 	for g1 := range c1 {
 		c2 := m.LoopAll()
 		for g2 := range c2 {
 			//_, _ = g1, g2
 			//twopt.PairCounter(w1.H, g1.P, g2.P, twopt.SMu)
-			select {
-			case w1.Work <- Job{g1, g2}:
-			case w2.Work <- Job{g1, g2}:
-			}
+			fore.SubmitJob(Job{g1, g2})
 		}
 	}
-	close(w1.Work)
-	close(w2.Work)
-	<-w1.Done
-	<-w2.Done
+	fore.EndWork()
 
-	w1.H.AddHist(w2.H)
+	hfinal := fore.Workers[0].H
+	for i := 1; i < 8; i++ {
+		hfinal.AddHist(fore.Workers[i].H)
+	}
 
 	for i := 0; i < 5; i++ {
 		for j := 0; j < 5; j++ {
-			fmt.Print(w1.H.Get(i, j), " ")
+			fmt.Print(hfinal.Get(i, j), " ")
 		}
 		fmt.Println()
 	}
