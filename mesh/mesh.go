@@ -9,20 +9,20 @@ type Index3D [3]int
 
 type Mesh struct {
 	Particles   []Particle   // Storage for particle data -- size Nparticles
-	Npart int // Number of particles
+	Npart       int          // Number of particles
 	Ndx         []int        // Storage for particle grid index -- size Nparticles
 	Dx          float64      // Grid spacing
-	Dim, Stride Index3D       // Grid dimensions and strides
+	Dim, Stride Index3D      // Grid dimensions and strides
 	Ngrid       int          // Number of grid points
 	Grid        []*GridPoint // Slice containing pointers to gridpoints with data
 }
 
 type GridPoint struct {
-	I        Index3D
+	I Index3D
 	P []Particle
 }
 
-func New(p []Particle, dx float64) (m *Mesh)  {
+func New(p []Particle, dx float64) (m *Mesh) {
 
 	// Setup
 	m = new(Mesh)
@@ -64,6 +64,19 @@ func New(p []Particle, dx float64) (m *Mesh)  {
 	}
 
 	m.DoSort()
-	
+
 	return
+}
+
+func (m *Mesh) LoopAll() chan *GridPoint {
+	c := make(chan *GridPoint)
+	go func() {
+		for _, g := range m.Grid {
+			if g != nil {
+				c <- g
+			}
+		}
+		close(c)
+	}()
+	return c
 }
