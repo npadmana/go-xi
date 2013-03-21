@@ -18,13 +18,9 @@ func (p Particle) String() string {
 }
 
 // ParticleArr is a storage container for Particles
-type Particles struct {
-	Data   []Particle
-	BoxDim vector.Vector3D
-	BoxMin vector.Vector3D
-}
+type Particles []Particle
 
-func NewFromXYZW(fn string) (*Particles, error) {
+func NewFromXYZW(fn string) (Particles, error) {
 	var parr Particles
 	var err error
 	var p1 Particle
@@ -33,32 +29,15 @@ func NewFromXYZW(fn string) (*Particles, error) {
 	go textio.FileLineReader(fn, out)
 	for l1 := range out {
 		if l1.Err != nil {
-			return &Particles{}, l1.Err
+			return nil, l1.Err
 		}
 		_, err = fmt.Sscan(l1.Str, &p1.X[0], &p1.X[1], &p1.X[2], &p1.W)
-		parr.Data = append(parr.Data, p1)
+		parr = append(parr, p1)
 		if err != nil {
-			return &Particles{}, err
+			return nil, err
 		}
 	}
 
-	return &parr, nil
+	return parr, nil
 }
 
-func (p *Particles) SetBox() {
-	if len(p.Data) == 0 {
-		return
-	}
-
-	p.BoxMin = p.Data[0].X
-	maxpos := p.Data[0].X
-
-	for _, p1 := range p.Data {
-		p.BoxMin = p.BoxMin.Min(p1.X)
-		maxpos = maxpos.Max(p1.X)
-	}
-
-	p.BoxDim = maxpos.Sub(p.BoxMin)
-
-
-}
