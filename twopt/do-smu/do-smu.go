@@ -89,6 +89,7 @@ func main() {
 	m := mesh.New(p, 50.0)
 	fmt.Println("Mesh created")
 
+	fmt.Println("Using nworkers=", nworkers)
 	fore := NewForeman(nworkers)
 	c1 := m.LoopAll()
 	auto := true
