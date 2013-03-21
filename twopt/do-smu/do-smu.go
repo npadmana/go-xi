@@ -7,6 +7,7 @@ import (
 	"github.com/npadmana/go-xi/twopt"
 	"github.com/npadmana/go-xi/utils"
 	"log"
+	"flag"
 )
 
 type Job struct {
@@ -76,6 +77,10 @@ func NewWorker() (w *Worker) {
 }
 
 func main() {
+	var nworkers int 
+	flag.IntVar(&nworkers, "nworkers", 1, "Number of workers")
+	flag.Parse()
+	
 	p, err := mesh.ReadParticles("test_N.dat")
 	fmt.Println("Read in Particles")
 	if err != nil {
@@ -84,7 +89,7 @@ func main() {
 	m := mesh.New(p, 50.0)
 	fmt.Println("Mesh created")
 
-	fore := NewForeman(2)
+	fore := NewForeman(nworkers)
 	c1 := m.LoopAll()
 	auto := true
 	for g1 := range c1 {
