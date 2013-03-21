@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	//"github.com/npadmana/go-xi/particle"
 	"github.com/npadmana/go-xi/mesh"
 	"github.com/npadmana/go-xi/twopt"
 	"github.com/npadmana/go-xi/utils"
