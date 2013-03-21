@@ -9,8 +9,10 @@ import (
 func PairCounter(h histogram.Histogrammer, p1, p2 []mesh.Particle, f DistFunc) {
 
 	for _, ip1 := range p1 {
+		x1 := ip1.X
+		w1 := ip1.W
 		for _, ip2 := range p2 {
-			h.Add(ip1.W*ip2.W, f(ip1.X, ip2.X)...)
+			h.Add(w1*ip2.W, f(x1, ip2.X)...)
 		}
 	}
 
