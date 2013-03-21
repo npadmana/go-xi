@@ -6,11 +6,11 @@ import (
 )
 
 // PairCounter implements the inner pair counting loop.
-func PairCounter(h utils.Histogrammer, p1, p2 []mesh.Particle, f DistFunc) {
+func PairCounter(h utils.Histogrammer, p1, p2 []mesh.Particle, f DistFunc, scale float64) {
 
 	for _, ip1 := range p1 {
 		x1 := ip1.X
-		w1 := ip1.W
+		w1 := ip1.W*scale
 		for _, ip2 := range p2 {
 			h.Add(w1*ip2.W, f(x1, ip2.X)...)
 		}

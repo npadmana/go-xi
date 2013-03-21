@@ -11,6 +11,7 @@ import (
 
 type Job struct {
 	g1, g2 *mesh.GridPoint
+	Scale  float64
 }
 
 type Worker struct {
@@ -57,7 +58,7 @@ func (f *Foreman) SubmitJob(j Job) {
 func NewWorker() (w *Worker) {
 	w = new(Worker)
 	w.H = utils.NewUniform([]int{5, 5}, []float64{0, 0}, []float64{200, 1})
-	w.Work = make(chan Job)
+	w.Work = make(chan Job, 100)
 	w.Done = make(chan bool)
 	go func(w1 *Worker) {
 		ok := true
@@ -68,7 +69,7 @@ func NewWorker() (w *Worker) {
 				w1.Done <- true
 				return
 			}
-			twopt.PairCounter(w1.H, job1.g1.P, job1.g2.P, twopt.SMu)
+			twopt.PairCounter(w1.H, job1.g1.P, job1.g2.P, twopt.SMu, job1.Scale)
 		}
 	}(w)
 	return
@@ -83,20 +84,26 @@ func main() {
 	m := mesh.New(p, 50.0)
 	fmt.Println("Mesh created")
 
-	fore := NewForeman(8)
+	fore := NewForeman(2)
 	c1 := m.LoopAll()
+	auto := true
 	for g1 := range c1 {
 		c2 := m.LoopAll()
 		for g2 := range c2 {
-			//_, _ = g1, g2
-			//twopt.PairCounter(w1.H, g1.P, g2.P, twopt.SMu)
-			fore.SubmitJob(Job{g1, g2})
+			switch {
+			case !auto:
+				fore.SubmitJob(Job{g1, g2, 1})
+			case auto && (g1.N < g2.N):
+				fore.SubmitJob(Job{g1, g2, 2})
+			case auto && (g1.N == g2.N):
+				fore.SubmitJob(Job{g1, g2, 1})
+			}
 		}
 	}
 	fore.EndWork()
 
 	hfinal := fore.Workers[0].H
-	for i := 1; i < 8; i++ {
+	for i := 1; i < len(fore.Workers); i++ {
 		hfinal.AddHist(fore.Workers[i].H)
 	}
 

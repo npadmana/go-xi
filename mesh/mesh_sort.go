@@ -35,11 +35,11 @@ func (m *Mesh) DoSort() {
 	// Now set the indices
 	ndxprev := m.Ndx[0]
 	min := 0
-	m.Grid[ndxprev] = &GridPoint{I : m.flat2three(0)}
+	m.Grid[ndxprev] = &GridPoint{N: ndxprev, I : m.flat2three(0)}
 	for ii, ndx1 := range m.Ndx {
 		if ndx1 != ndxprev {
 			m.Grid[ndxprev].P = m.Particles[min:ii]
-			m.Grid[ndx1] = &GridPoint{I: m.flat2three(ndx1)}
+			m.Grid[ndx1] = &GridPoint{N: ndx1, I: m.flat2three(ndx1)}
 			min = ii
 			ndxprev = ndx1
 

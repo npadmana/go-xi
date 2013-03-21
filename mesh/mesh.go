@@ -5,6 +5,10 @@ import (
 	//"github.com/npadmana/go-xi/twopt"
 )
 
+const (
+	GeneratorBuffer = 100 // The buffer size for our generators
+)
+
 type Index3D [3]int
 
 type Mesh struct {
@@ -18,6 +22,7 @@ type Mesh struct {
 }
 
 type GridPoint struct {
+	N int
 	I Index3D
 	P []Particle
 }
@@ -69,7 +74,7 @@ func New(p []Particle, dx float64) (m *Mesh) {
 }
 
 func (m *Mesh) LoopAll() chan *GridPoint {
-	c := make(chan *GridPoint, 100)
+	c := make(chan *GridPoint, GeneratorBuffer)
 	go func() {
 		for _, g := range m.Grid {
 			if g != nil {
