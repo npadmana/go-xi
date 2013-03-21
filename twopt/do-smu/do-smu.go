@@ -77,7 +77,9 @@ func NewWorker() (w *Worker) {
 
 func main() {
 	var nworkers int 
+	var meshsize float64
 	flag.IntVar(&nworkers, "nworkers", 1, "Number of workers")
+	flag.Float64Var(&meshsize, "meshsize", 50, "Mesh size")
 	flag.Parse()
 	
 	p, err := mesh.ReadParticles("test_N.dat")
@@ -85,7 +87,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	m := mesh.New(p, 50.0)
+	m := mesh.New(p, meshsize)
 	fmt.Println("Mesh created")
 
 	fmt.Println("Using nworkers=", nworkers)
