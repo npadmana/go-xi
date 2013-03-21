@@ -2,13 +2,13 @@ package mesh
 
 import (
 	"fmt"
-	"github.com/npadmana/npgo/math/vector"
+	"github.com/npadmana/go-xi/utils"
 	"io"
 	"os"
 )
 
 type Particle struct {
-	X vector.Vector3D
+	X utils.Vector3D
 	W float64
 }
 

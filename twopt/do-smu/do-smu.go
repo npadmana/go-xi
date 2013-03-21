@@ -5,7 +5,7 @@ import (
 	//"github.com/npadmana/go-xi/particle"
 	"github.com/npadmana/go-xi/mesh"
 	"github.com/npadmana/go-xi/twopt"
-	"github.com/npadmana/npgo/math/histogram"
+	"github.com/npadmana/go-xi/utils"
 	"log"
 )
 
@@ -18,7 +18,7 @@ func main() {
 	m := mesh.New(p, 50.0)
 	fmt.Println("Mesh created")
 
-	h := histogram.NewUniform([]int{5, 5}, []float64{0, 0}, []float64{200, 1})
+	h := utils.NewUniform([]int{5, 5}, []float64{0, 0}, []float64{200, 1})
 	h.Reset()
 	for _, g1 := range m.Grid {
 		if g1 != nil {

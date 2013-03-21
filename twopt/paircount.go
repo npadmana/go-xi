@@ -2,11 +2,11 @@ package twopt
 
 import (
 	"github.com/npadmana/go-xi/mesh"
-	"github.com/npadmana/npgo/math/histogram"
+	"github.com/npadmana/go-xi/utils"
 )
 
 // PairCounter implements the inner pair counting loop.
-func PairCounter(h histogram.Histogrammer, p1, p2 []mesh.Particle, f DistFunc) {
+func PairCounter(h utils.Histogrammer, p1, p2 []mesh.Particle, f DistFunc) {
 
 	for _, ip1 := range p1 {
 		x1 := ip1.X

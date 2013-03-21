@@ -3,8 +3,6 @@ package mesh
 import (
 	"math"
 	//"github.com/npadmana/go-xi/twopt"
-	//"github.com/npadmana/npgo/math/histogram"
-	//"log"
 )
 
 type Index3D [3]int

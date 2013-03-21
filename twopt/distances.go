@@ -1,13 +1,13 @@
 package twopt
 
 import (
-	"github.com/npadmana/npgo/math/vector"
+	"github.com/npadmana/go-xi/utils"
 	"math"
 )
 
-type DistFunc func(p1, p2 vector.Vector3D) []float64
+type DistFunc func(p1, p2 utils.Vector3D) []float64
 
-func SMu(p1, p2 vector.Vector3D) []float64 {
+func SMu(p1, p2 utils.Vector3D) []float64 {
 	var s2, l2, sl, s1, l1, mu float64
 	for i := 0; i < 3; i++ {
 		s1 = p1[i] - p2[i]
