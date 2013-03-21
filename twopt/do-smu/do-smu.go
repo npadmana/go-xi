@@ -88,7 +88,7 @@ func main() {
 	c1 := m.LoopAll()
 	auto := true
 	for g1 := range c1 {
-		c2 := m.LoopAll()
+		c2 := m.LoopNear(g1.I, 200)
 		for g2 := range c2 {
 			switch {
 			case !auto:

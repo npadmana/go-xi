@@ -85,3 +85,36 @@ func (m *Mesh) LoopAll() chan *GridPoint {
 	}()
 	return c
 }
+
+func (m *Mesh) LoopNear(p Index3D, dist float64) chan *GridPoint {
+	c := make(chan *GridPoint, GeneratorBuffer)
+	ndx := int(math.Ceil(dist/m.Dx)) + 1 // Is the one necessary?
+	var imin, imax Index3D
+
+	for i, p1 := range p {
+		imin[i] = p1 - ndx
+		if imin[i] < 0 {
+			imin[i] = 0
+		}
+		imax[i] = p1 + ndx + 2 // Exclusive bound
+		if imax[i] > m.Dim[i] {
+			imax[i] = m.Dim[i]
+		}
+	}
+
+	go func() {
+		pos := 0
+		for i1 := imin[0]; i1 < imax[0]; i1++ {
+			for j1 := imin[1]; j1 < imax[1]; j1++ {
+				for k1 := imin[2]; k1 < imax[2]; k1++ {
+					pos = i1*m.Stride[0] + j1*m.Stride[1] + k1*m.Stride[2]
+					if m.Grid[pos] != nil {
+						c <- m.Grid[pos]
+					}
+				}
+			}
+		}
+		close(c)
+	}()
+	return c
+}
