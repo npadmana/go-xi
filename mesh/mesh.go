@@ -69,7 +69,7 @@ func New(p []Particle, dx float64) (m *Mesh) {
 }
 
 func (m *Mesh) LoopAll() chan *GridPoint {
-	c := make(chan *GridPoint)
+	c := make(chan *GridPoint, 100)
 	go func() {
 		for _, g := range m.Grid {
 			if g != nil {
