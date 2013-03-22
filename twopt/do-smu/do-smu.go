@@ -1,14 +1,15 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"github.com/npadmana/go-xi/mesh"
 	"github.com/npadmana/go-xi/twopt"
-	"github.com/npadmana/go-xi/utils"
+	//"github.com/npadmana/go-xi/utils"
 	"log"
-	"runtime/pprof"
 	"os"
+	"runtime/pprof"
 )
 
 type Job struct {
@@ -17,7 +18,7 @@ type Job struct {
 }
 
 type Worker struct {
-	H    *utils.UniformHistogram
+	H    twopt.PairCounter
 	Work chan Job
 	Done chan bool
 }
@@ -27,11 +28,11 @@ type Foreman struct {
 	LastWorker int
 }
 
-func NewForeman(n int) (f *Foreman) {
+func NewForeman(n int, newpair func() twopt.PairCounter) (f *Foreman) {
 	f = new(Foreman)
 	f.Workers = make([]*Worker, n)
 	for i := range f.Workers {
-		f.Workers[i] = NewWorker()
+		f.Workers[i] = NewWorker(newpair)
 	}
 	f.LastWorker = 0
 	return
@@ -59,9 +60,9 @@ func (f *Foreman) SubmitJob(j Job) {
 	}
 }
 
-func NewWorker() (w *Worker) {
+func NewWorker(newpair func() twopt.PairCounter) (w *Worker) {
 	w = new(Worker)
-	w.H = utils.NewUniform([]int{5, 5}, []float64{0, 0}, []float64{200, 1})
+	w.H = newpair()
 	w.Work = make(chan Job, 100)
 	w.Done = make(chan bool)
 	go func(w1 *Worker) {
@@ -73,7 +74,7 @@ func NewWorker() (w *Worker) {
 				w1.Done <- true
 				return
 			}
-			twopt.PairCounter(w1.H, job1.g1.P, job1.g2.P, job1.Scale)
+			w1.H.Count(job1.g1.P, job1.g2.P, job1.Scale)
 		}
 	}(w)
 	return
@@ -82,28 +83,34 @@ func NewWorker() (w *Worker) {
 func main() {
 	var nworkers int
 	var meshsize float64
+	var fn string
 	flag.IntVar(&nworkers, "nworkers", 1, "Number of workers")
 	flag.Float64Var(&meshsize, "meshsize", 50, "Mesh size")
+	flag.StringVar(&fn, "fn", "", "Filename")
 	flag.Parse()
 
+	if fn == "" {
+		log.Fatal(errors.New("A filename must be specified"))
+	}
 
-	p, err := mesh.ReadParticles("test_N.dat")
+	p, err := mesh.ReadParticles(fn)
 	fmt.Println("Read in Particles")
 	if err != nil {
 		log.Fatal(err)
 	}
 	m := mesh.New(p, meshsize)
 	fmt.Println("Mesh created")
-	
+
 	fp, err := os.Create("smu.prof")
 	if err != nil {
 		log.Fatal(err)
-		}
+	}
 	pprof.StartCPUProfile(fp)
 	defer pprof.StopCPUProfile()
 
 	fmt.Println("Using nworkers=", nworkers)
-	fore := NewForeman(nworkers)
+	fore := NewForeman(nworkers, func() twopt.PairCounter {
+		return twopt.PairCounter(twopt.NewSMuPairCounter(5,5,200))})
 	c1 := m.LoopAll()
 	auto := true
 	for g1 := range c1 {
@@ -123,7 +130,7 @@ func main() {
 
 	hfinal := fore.Workers[0].H
 	for i := 1; i < len(fore.Workers); i++ {
-		hfinal.AddHist(fore.Workers[i].H)
+		hfinal.Add(fore.Workers[i].H)
 	}
 
 	for i := 0; i < 5; i++ {
