@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/npadmana/go-xi/utils"
 	"io"
+	"math/rand"
 	"os"
 )
 
@@ -38,7 +39,7 @@ func countlines(fn string) (n int, err error) {
 	return n, nil
 }
 
-func ReadParticles(fn string) ([]Particle, error) {
+func ReadParticles(fn string, subsample float64) ([]Particle, error) {
 	// Get the number of lines and allocate
 	nlines, err := countlines(fn)
 	if err != nil {
@@ -57,13 +58,19 @@ func ReadParticles(fn string) ([]Particle, error) {
 	defer ff.Close()
 	fbuf := bufio.NewReader(ff)
 
+	fmt.Println("Subsampling down by ", subsample)
 	// Read loop
+	iline := 0
 	for ii := 0; ii < nlines; ii++ {
-		_, err = fmt.Fscan(fbuf, &parr[ii].X[0], &parr[ii].X[1], &parr[ii].X[2], &parr[ii].W)
+		_, err = fmt.Fscan(fbuf, &parr[iline].X[0], &parr[iline].X[1], &parr[iline].X[2], &parr[iline].W)
 		if err != nil {
 			return nil, err
 		}
+		if rand.Float64() < subsample {
+			iline++
+		}
 	}
+	fmt.Println("Final size =", iline)
 
-	return parr, nil
+	return parr[0:iline], nil
 }

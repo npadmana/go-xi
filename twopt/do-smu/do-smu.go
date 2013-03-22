@@ -82,10 +82,11 @@ func NewWorker(newpair func() twopt.PairCounter) (w *Worker) {
 
 func main() {
 	var nworkers int
-	var meshsize float64
+	var meshsize, subsample float64
 	var fn, cpuprof string
 	flag.IntVar(&nworkers, "nworkers", 1, "Number of workers")
 	flag.Float64Var(&meshsize, "meshsize", 50, "Mesh size")
+	flag.Float64Var(&subsample, "subfraction", 1.01, "Subsampling fraction")
 	flag.StringVar(&fn, "fn", "", "Filename")
 	flag.StringVar(&cpuprof, "cpuprofile", "", "CPU Filename")
 	flag.Parse()
@@ -94,7 +95,7 @@ func main() {
 		log.Fatal(errors.New("A filename must be specified"))
 	}
 
-	p, err := mesh.ReadParticles(fn)
+	p, err := mesh.ReadParticles(fn, subsample)
 	fmt.Println("Read in Particles")
 	if err != nil {
 		log.Fatal(err)
