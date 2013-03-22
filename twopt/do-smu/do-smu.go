@@ -54,8 +54,8 @@ func (f *Foreman) SubmitJob(j Job) {
 		case f.Workers[f.LastWorker].Work <- j:
 			ok = true
 			f.LastWorker = (f.LastWorker + 1) % len(f.Workers)
-			//default:
-			//	i = (i + 1) % len(f.Workers)
+		default:
+			f.LastWorker = (f.LastWorker + 1) % len(f.Workers)
 		}
 	}
 }
@@ -63,7 +63,7 @@ func (f *Foreman) SubmitJob(j Job) {
 func NewWorker(newpair func() twopt.PairCounter) (w *Worker) {
 	w = new(Worker)
 	w.H = newpair()
-	w.Work = make(chan Job, 100)
+	w.Work = make(chan Job, 5)
 	w.Done = make(chan bool)
 	go func(w1 *Worker) {
 		ok := true
