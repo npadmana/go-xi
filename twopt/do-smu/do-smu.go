@@ -49,7 +49,6 @@ func (f *Foreman) EndWork() {
 
 func (f *Foreman) SubmitJob(j Job) {
 	ok := false
-	fmt.Println(f.LastWorker)
 	for !ok {
 		select {
 		case f.Workers[f.LastWorker].Work <- j:
@@ -84,10 +83,11 @@ func NewWorker(newpair func() twopt.PairCounter) (w *Worker) {
 func main() {
 	var nworkers int
 	var meshsize float64
-	var fn string
+	var fn, cpuprof string
 	flag.IntVar(&nworkers, "nworkers", 1, "Number of workers")
 	flag.Float64Var(&meshsize, "meshsize", 50, "Mesh size")
 	flag.StringVar(&fn, "fn", "", "Filename")
+	flag.StringVar(&cpuprof, "cpuprofile", "", "CPU Filename")
 	flag.Parse()
 
 	if fn == "" {
@@ -102,16 +102,19 @@ func main() {
 	m := mesh.New(p, meshsize)
 	fmt.Println("Mesh created")
 
-	fp, err := os.Create("smu.prof")
-	if err != nil {
-		log.Fatal(err)
+	if cpuprof != "" {
+		fp, err := os.Create("smu.prof")
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(fp)
+		defer pprof.StopCPUProfile()
 	}
-	pprof.StartCPUProfile(fp)
-	defer pprof.StopCPUProfile()
 
 	fmt.Println("Using nworkers=", nworkers)
 	fore := NewForeman(nworkers, func() twopt.PairCounter {
-		return twopt.PairCounter(twopt.NewSMuPairCounter(5,5,200))})
+		return twopt.PairCounter(twopt.NewSMuPairCounter(5, 5, 200))
+	})
 	c1 := m.LoopAll()
 	auto := true
 	for g1 := range c1 {
