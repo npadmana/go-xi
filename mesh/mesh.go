@@ -88,7 +88,7 @@ func (m *Mesh) LoopAll() chan *GridPoint {
 
 func (m *Mesh) LoopNear(p Index3D, dist float64) chan *GridPoint {
 	c := make(chan *GridPoint, GeneratorBuffer)
-	ndx := int(math.Ceil(dist/m.Dx)) + 1 // Is the one necessary?
+	ndx := int(math.Ceil(dist/m.Dx)) + 2 // Is the one necessary?
 	var imin, imax Index3D
 
 	for i, p1 := range p {

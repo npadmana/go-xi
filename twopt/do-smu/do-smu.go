@@ -1,12 +1,14 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/npadmana/go-xi/mesh"
 	"github.com/npadmana/go-xi/twopt"
 	"github.com/npadmana/go-xi/utils"
 	"log"
-	"flag"
+	"runtime/pprof"
+	"os"
 )
 
 type Job struct {
@@ -21,7 +23,7 @@ type Worker struct {
 }
 
 type Foreman struct {
-	Workers []*Worker
+	Workers    []*Worker
 	LastWorker int
 }
 
@@ -51,8 +53,8 @@ func (f *Foreman) SubmitJob(j Job) {
 		case f.Workers[f.LastWorker].Work <- j:
 			ok = true
 			f.LastWorker = (f.LastWorker + 1) % len(f.Workers)
-		//default:
-		//	i = (i + 1) % len(f.Workers)
+			//default:
+			//	i = (i + 1) % len(f.Workers)
 		}
 	}
 }
@@ -71,19 +73,20 @@ func NewWorker() (w *Worker) {
 				w1.Done <- true
 				return
 			}
-			twopt.PairCounter(w1.H, job1.g1.P, job1.g2.P, twopt.SMu, job1.Scale)
+			twopt.PairCounter(w1.H, job1.g1.P, job1.g2.P, job1.Scale)
 		}
 	}(w)
 	return
 }
 
 func main() {
-	var nworkers int 
+	var nworkers int
 	var meshsize float64
 	flag.IntVar(&nworkers, "nworkers", 1, "Number of workers")
 	flag.Float64Var(&meshsize, "meshsize", 50, "Mesh size")
 	flag.Parse()
-	
+
+
 	p, err := mesh.ReadParticles("test_N.dat")
 	fmt.Println("Read in Particles")
 	if err != nil {
@@ -91,6 +94,13 @@ func main() {
 	}
 	m := mesh.New(p, meshsize)
 	fmt.Println("Mesh created")
+	
+	fp, err := os.Create("smu.prof")
+	if err != nil {
+		log.Fatal(err)
+		}
+	pprof.StartCPUProfile(fp)
+	defer pprof.StopCPUProfile()
 
 	fmt.Println("Using nworkers=", nworkers)
 	fore := NewForeman(nworkers)
