@@ -61,7 +61,9 @@ func (smu *SMuPairCounter) Count(p1, p2 []mesh.Particle, scale float64) {
 				mu = math.Abs(sl) / (s1*l1 + 1.e-15)
 				imu = int(mu / smu.Dmu)
 				is = int(s1 / smu.Ds)
-				smu.Data[is*smu.Nmu+imu] += w1 * p2[ip2].W
+				if (imu < smu.Nmu) && (is < smu.Ns) {
+					smu.Data[is*smu.Nmu+imu] += w1 * p2[ip2].W
+				}
 			}
 		}
 	}
