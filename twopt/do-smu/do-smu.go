@@ -49,6 +49,7 @@ func (f *Foreman) EndWork() {
 
 func (f *Foreman) SubmitJob(j Job) {
 	ok := false
+	fmt.Println(f.LastWorker)
 	for !ok {
 		select {
 		case f.Workers[f.LastWorker].Work <- j:
