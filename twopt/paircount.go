@@ -58,7 +58,10 @@ func (smu *SMuPairCounter) Count(p1, p2 []mesh.Particle, scale float64) {
 			s1 = math.Sqrt(s2)
 			if s1 < smu.Maxs {
 				l1 = math.Sqrt(l2)
-				mu = math.Abs(sl) / (s1*l1 + 1.e-15)
+				mu = sl / (s1*l1 + 1.e-15)
+				if mu < 0 {
+					mu = -mu
+				}
 				imu = int(mu / smu.Dmu)
 				is = int(s1 / smu.Ds)
 				if (imu < smu.Nmu) && (is < smu.Ns) {
