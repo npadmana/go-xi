@@ -35,7 +35,7 @@ func NewSMuPairCounter(Ns, Nmu int, Maxs float64) (smu *SMuPairCounter) {
 
 // PairCounter implements the inner pair counting loop.
 func (smu *SMuPairCounter) Count(p1, p2 []mesh.Particle, scale float64) {
-	var s2, l2, sl, s1, l1, mu, w1 float64
+	var s2, l2, sl, s1, l1, mu, w1, r1 float64
 	var imu, is int
 	var x1 utils.Vector3D
 
@@ -46,7 +46,13 @@ func (smu *SMuPairCounter) Count(p1, p2 []mesh.Particle, scale float64) {
 	for ip1 = 0; ip1 < n1; ip1++ {
 		x1 = p1[ip1].X
 		w1 = p1[ip1].W * scale
+		r1 = p1[ip1].R
 		for ip2 = 0; ip2 < n2; ip2++ {
+			// Triangle inequality optimization
+			if math.Abs(r1-p2[ip2].R) > smu.Maxs {
+				continue
+			}
+
 			s2, l2, sl = 0, 0, 0
 			for i = 0; i < 3; i++ {
 				s1 = x1[i] - p2[ip2].X[i]
