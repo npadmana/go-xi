@@ -4,3 +4,5 @@ all :
 	gccgo -c -O3 -march=native -mtune=native -o mesh.o mesh/*.go
 	gccgo -c -O3 -march=native -mtune=native -o twopt.o twopt/*.go
 	gccgo -O3 -march=native -mtune=native -o do-smu twopt/do-smu/do-smu.go utils.o mesh.o twopt.o
+	gccgo -O3 -march=native -mtune=native -o smu-benchmark twopt/smu-benchmark/smu-benchmark.go utils.o mesh.o twopt.o
+	
