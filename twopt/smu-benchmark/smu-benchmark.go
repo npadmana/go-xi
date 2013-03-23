@@ -11,9 +11,10 @@ import (
 )
 
 func main() {
-	var subsample float64
+	var subsample, maxs float64
 	var fn string
 	flag.Float64Var(&subsample, "subfraction", 1.01, "Subsampling fraction")
+	flag.Float64Var(&maxs, "maxs", 200, "maximum s value")
 	flag.StringVar(&fn, "fn", "", "Filename")
 	flag.Parse()
 
@@ -28,7 +29,7 @@ func main() {
 	}
 
 	t1 := time.Now()
-	cc := twopt.NewSMuPairCounter(5, 5, 200)
+	cc := twopt.NewSMuPairCounter(5, 5, maxs)
 	cc.Count(p, p, 1.0)
 	dt := time.Since(t1)
 
