@@ -2,7 +2,6 @@ package twopt
 
 import (
 	"github.com/npadmana/go-xi/mesh"
-	"github.com/npadmana/go-xi/utils"
 	"math"
 )
 
@@ -37,7 +36,7 @@ func NewSMuPairCounter(Ns, Nmu int, Maxs float64) (smu *SMuPairCounter) {
 func (smu *SMuPairCounter) Count(p1, p2 []mesh.Particle, scale float64) {
 	var s2, l2, sl, s1, l1, mu, w1 float64
 	var imu, is, i int
-	var x1 utils.Vector3D
+	var x1 mesh.Vector3D
 
 	n1 := len(p1)
 	n2 := len(p2)

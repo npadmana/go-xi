@@ -3,14 +3,13 @@ package mesh
 import (
 	"bufio"
 	"fmt"
-	"github.com/npadmana/go-xi/utils"
 	"io"
 	"math/rand"
 	"os"
 )
 
 type Particle struct {
-	X utils.Vector3D
+	X Vector3D
 	W float64
 }
 
