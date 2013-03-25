@@ -6,79 +6,11 @@ import (
 	"fmt"
 	"github.com/npadmana/go-xi/mesh"
 	"github.com/npadmana/go-xi/twopt"
-	//"github.com/npadmana/go-xi/utils"
 	"log"
 	"os"
 	"runtime/pprof"
 )
 
-type Job struct {
-	g1, g2 *mesh.GridPoint
-	Scale  float64
-}
-
-type Worker struct {
-	H    twopt.PairCounter
-	Work chan Job
-	Done chan bool
-}
-
-type Foreman struct {
-	Workers    []*Worker
-	LastWorker int
-}
-
-func NewForeman(n int, newpair func() twopt.PairCounter) (f *Foreman) {
-	f = new(Foreman)
-	f.Workers = make([]*Worker, n)
-	for i := range f.Workers {
-		f.Workers[i] = NewWorker(newpair)
-	}
-	f.LastWorker = 0
-	return
-}
-
-func (f *Foreman) EndWork() {
-	for _, w := range f.Workers {
-		close(w.Work)
-	}
-	for _, w := range f.Workers {
-		<-w.Done
-	}
-}
-
-func (f *Foreman) SubmitJob(j Job) {
-	ok := false
-	for !ok {
-		select {
-		case f.Workers[f.LastWorker].Work <- j:
-			ok = true
-			f.LastWorker = (f.LastWorker + 1) % len(f.Workers)
-		default:
-			f.LastWorker = (f.LastWorker + 1) % len(f.Workers)
-		}
-	}
-}
-
-func NewWorker(newpair func() twopt.PairCounter) (w *Worker) {
-	w = new(Worker)
-	w.H = newpair()
-	w.Work = make(chan Job, 5)
-	w.Done = make(chan bool)
-	go func(w1 *Worker) {
-		ok := true
-		var job1 Job
-		for {
-			job1, ok = <-w1.Work
-			if !ok {
-				w1.Done <- true
-				return
-			}
-			w1.H.Count(job1.g1.P, job1.g2.P, job1.Scale)
-		}
-	}(w)
-	return
-}
 
 func main() {
 	var nworkers int
@@ -113,7 +45,7 @@ func main() {
 	}
 
 	fmt.Println("Using nworkers=", nworkers)
-	fore := NewForeman(nworkers, func() twopt.PairCounter {
+	fore := twopt.NewForeman(nworkers, func() twopt.PairCounter {
 		return twopt.PairCounter(twopt.NewSMuPairCounter(5, 5, 200))
 	})
 	c1 := m.LoopAll()
@@ -123,11 +55,11 @@ func main() {
 		for g2 := range c2 {
 			switch {
 			case !auto:
-				fore.SubmitJob(Job{g1, g2, 1})
+				fore.SubmitJob(twopt.NewJob(g1, g2, 1))
 			case auto && (g1.N < g2.N):
-				fore.SubmitJob(Job{g1, g2, 2})
+				fore.SubmitJob(twopt.NewJob(g1, g2, 2))
 			case auto && (g1.N == g2.N):
-				fore.SubmitJob(Job{g1, g2, 1})
+				fore.SubmitJob(twopt.NewJob(g1, g2, 1))
 			}
 		}
 	}
