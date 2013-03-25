@@ -12,6 +12,37 @@ import (
 	"time"
 )
 
+func doOne(m1, m2 *mesh.Mesh, outfn string, Nmu, Ns int, maxs float64, auto bool, nworkers int) {
+	fore := twopt.NewForeman(nworkers, func() twopt.PairCounter {
+		return twopt.PairCounter(twopt.NewSMuPairCounter(Ns, Nmu, maxs))
+	})
+
+	t1 := time.Now()
+	c1 := m1.LoopAll()
+	for g1 := range c1 {
+		c2 := m2.LoopNear(g1.I, maxs)
+		for g2 := range c2 {
+			switch {
+			case !auto:
+				fore.SubmitJob(twopt.NewJob(g1, g2, 1))
+			case auto && (g1.N < g2.N):
+				fore.SubmitJob(twopt.NewJob(g1, g2, 2))
+			case auto && (g1.N == g2.N):
+				fore.SubmitJob(twopt.NewJob(g1, g2, 1))
+			}
+		}
+	}
+	fore.EndWork()
+	hfinal := fore.Summarize()
+	fmt.Printf("Time to complete = %s\n", time.Since(t1))
+	fout, err := os.Create(outfn)
+	if err != nil {
+		log.Fatal(err)
+	}
+	hfinal.PPrint(fout)
+	fout.Close()
+}
+
 func main() {
 
 	// Define the input parameters
@@ -78,38 +109,13 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
-	var hfinal twopt.PairCounter
-
 	fmt.Println("Using nworkers=", nworkers)
-	fore := twopt.NewForeman(nworkers, func() twopt.PairCounter {
-		return twopt.PairCounter(twopt.NewSMuPairCounter(Ns, Nmu, maxs))
-	})
-
-	// DD
-	t1 := time.Now()
+	// Do DD, DR, RR
 	fmt.Println("Starting DD....")
-	c1 := mD.LoopAll()
-	for g1 := range c1 {
-		c2 := mD.LoopNear(g1.I, maxs)
-		for g2 := range c2 {
-			switch {
-			case (g1.N < g2.N):
-				fore.SubmitJob(twopt.NewJob(g1, g2, 2))
-			case (g1.N == g2.N):
-				fore.SubmitJob(twopt.NewJob(g1, g2, 1))
-			}
-		}
-	}
-	fore.EndWork()
-	hfinal = fore.Summarize()
-	fmt.Printf("Time to complete DD = %s\n", time.Since(t1))
-	fout, err := os.Create(outprefix + "-DD.dat")
-	if err != nil {
-		log.Fatal(err)
-	}
-	hfinal.PPrint(fout)
-	fout.Close()
+	doOne(mD, mD, outprefix+"-DD.dat", Nmu, Ns, maxs, true, nworkers)
+	fmt.Println("Starting DR....")
+	doOne(mD, mR, outprefix+"-DR.dat", Nmu, Ns, maxs, false, nworkers)
+	fmt.Println("Starting RR....")
+	doOne(mR, mR, outprefix+"-RR.dat", Nmu, Ns, maxs, true, nworkers)
 
-
-	_ = mR
 }
