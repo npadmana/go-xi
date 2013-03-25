@@ -28,11 +28,12 @@ func main() {
 	}
 
 	p, err := mesh.ReadParticles(fn, subsample)
+	boxmin, boxmax := p.MinMax()
 	fmt.Println("Read in Particles")
 	if err != nil {
 		log.Fatal(err)
 	}
-	m := mesh.New(p, meshsize)
+	m := mesh.New(p, meshsize, boxmin, boxmax)
 	fmt.Println("Mesh created")
 
 	if cpuprof != "" {

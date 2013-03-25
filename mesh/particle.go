@@ -13,6 +13,8 @@ type Particle struct {
 	W float64
 }
 
+type ParticleArr []Particle
+
 func (p *Particle) String() string {
 	return fmt.Sprintf("(%g,%g,%g),%g", p.X[0], p.X[1], p.X[2], p.W)
 }
@@ -38,7 +40,7 @@ func countlines(fn string) (n int, err error) {
 	return n, nil
 }
 
-func ReadParticles(fn string, subsample float64) ([]Particle, error) {
+func ReadParticles(fn string, subsample float64) (ParticleArr, error) {
 	// Get the number of lines and allocate
 	nlines, err := countlines(fn)
 	if err != nil {
@@ -47,7 +49,7 @@ func ReadParticles(fn string, subsample float64) ([]Particle, error) {
 	fmt.Println("Expect to get nlines =", nlines)
 
 	// Allocate particle data
-	parr := make([]Particle, nlines)
+	parr := make(ParticleArr, nlines)
 
 	// Open file
 	ff, err := os.Open(fn)
@@ -73,3 +75,14 @@ func ReadParticles(fn string, subsample float64) ([]Particle, error) {
 
 	return parr[0:iline], nil
 }
+
+func (p ParticleArr) MinMax() (boxmin, boxmax Vector3D) {
+	boxmin = p[0].X
+	boxmax = p[0].X
+	for _, p1 := range p {
+		boxmin = boxmin.Min(p1.X)
+		boxmax = boxmax.Max(p1.X)
+		}
+		return
+		}
+

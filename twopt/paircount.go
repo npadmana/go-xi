@@ -7,7 +7,7 @@ import (
 
 // PairCounter is a basic interface for the paircounting codes
 type PairCounter interface {
-	Count([]mesh.Particle, []mesh.Particle, float64)
+	Count(mesh.ParticleArr, mesh.ParticleArr, float64)
 	Add(PairCounter)
 	Get(is, imu int) float64
 }
@@ -33,7 +33,7 @@ func NewSMuPairCounter(Ns, Nmu int, Maxs float64) (smu *SMuPairCounter) {
 }
 
 // PairCounter implements the inner pair counting loop.
-func (smu *SMuPairCounter) Count(p1, p2 []mesh.Particle, scale float64) {
+func (smu *SMuPairCounter) Count(p1, p2 mesh.ParticleArr, scale float64) {
 	var s2, l2, sl, s1, l1, mu, w1 float64
 	var imu, is, i int
 	var x1 mesh.Vector3D

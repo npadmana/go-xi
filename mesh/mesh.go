@@ -12,7 +12,7 @@ const (
 type Index3D [3]int
 
 type Mesh struct {
-	Particles   []Particle   // Storage for particle data -- size Nparticles
+	Particles   ParticleArr   // Storage for particle data -- size Nparticles
 	Npart       int          // Number of particles
 	Ndx         []int        // Storage for particle grid index -- size Nparticles
 	Dx          float64      // Grid spacing
@@ -24,10 +24,11 @@ type Mesh struct {
 type GridPoint struct {
 	N int
 	I Index3D
-	P []Particle
+	P ParticleArr
 }
 
-func New(p []Particle, dx float64) (m *Mesh) {
+func New(p ParticleArr, dx float64, boxmin, boxmax Vector3D) (m *Mesh) {
+	var x Vector3D 
 
 	// Setup
 	m = new(Mesh)
@@ -35,19 +36,9 @@ func New(p []Particle, dx float64) (m *Mesh) {
 	m.Particles = p
 	m.Npart = len(p)
 
-	// Set box dimensions
-	x := m.Particles[0].X
-	boxmin := x
-	maxpos := x
-	for _, p1 := range m.Particles {
-		x = p1.X
-		boxmin = boxmin.Min(x)
-		maxpos = maxpos.Max(x)
-	}
-	boxdim := maxpos.Sub(boxmin)
-
 	// Set dimensions and strides
 	m.Ngrid = 1
+	boxdim := boxmax.Sub(boxmin)
 	for i, ll := range boxdim {
 		m.Dim[i] = int(math.Ceil(ll/m.Dx)) + 1
 		m.Ngrid *= m.Dim[i]
