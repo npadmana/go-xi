@@ -36,7 +36,7 @@ func NewSMuPairCounter(Ns, Nmu int, Maxs float64) (smu *SMuPairCounter) {
 // PairCounter implements the inner pair counting loop.
 func (smu *SMuPairCounter) Count(p1, p2 []mesh.Particle, scale float64) {
 	var s2, l2, sl, s1, l1, mu, w1 float64
-	var imu, is int
+	var imu, is, i int
 	var x1 utils.Vector3D
 
 	n1 := len(p1)
@@ -52,27 +52,15 @@ func (smu *SMuPairCounter) Count(p1, p2 []mesh.Particle, scale float64) {
 		x1 = p1[ip1].X
 		w1 = p1[ip1].W * scale
 		for ip2 = 0; ip2 < n2; ip2++ {
-//			//s2, l2, sl = 0, 0, 0
-//			for i = 0; i < 3; i++ {
-//				s1 = x1[i] - p2[ip2].X[i]
-//				l1 = 0.5 * (x1[i] + p2[ip2].X[i])
-//				s2 += s1 * s1
-//				l2 += l1 * l1
-//				sl += s1 * l1
-//			}
-			
-			// Explicitly unroll the s2 calculation
-			s1 = x1[0] - p2[ip2].X[0]
-			s2 = s1*s1
-			s1 = x1[1] - p2[ip2].X[1]
-			s2 += s1*s1
-			s1 = x1[2] - p2[ip2].X[2]
-			s2 += s1*s1
-			
-			
+			s2, l2, sl = 0, 0, 0
+			for i = 0; i < 3; i++ {
+				s1 = x1[i] - p2[ip2].X[i]
+				l1 = 0.5 * (x1[i] + p2[ip2].X[i])
+				s2 += s1 * s1
+				l2 += l1 * l1
+				sl += s1 * l1
+			}
 			if s2 < maxs2 {
-				sl = (p1[ip1].R2 - p2[ip2].R2)*0.5
-				l2 = (p1[ip1].R2 + p2[ip2].R2)*0.5 - 0.25*s2
 				s1 = math.Sqrt(s2)
 				l1 = 1./math.Sqrt(s2*l2 + 1.e-15) // Actually, inverse 1/(s*l)
 				mu = sl * l1
