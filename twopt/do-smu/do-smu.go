@@ -9,33 +9,66 @@ import (
 	"log"
 	"os"
 	"runtime/pprof"
+	"time"
 )
 
-
 func main() {
-	var nworkers int
-	var meshsize, subsample float64
-	var fn, cpuprof string
+
+	// Define the input parameters
+	var (
+		nworkers            int
+		meshsize, subsample float64
+		Dfn, Rfn, cpuprof   string
+		Ns, Nmu             int
+		maxs                float64
+		outprefix           string
+	)
+
+	// Basic flags
+	flag.StringVar(&Dfn, "dfn", "", "D filename")
+	flag.StringVar(&Rfn, "rfn", "", "D filename")
+	flag.StringVar(&outprefix, "outprefix", "", "Output prefix")
+	flag.IntVar(&Ns, "ns", 100, "Number of s bins")
+	flag.IntVar(&Nmu, "nmu", 100, "Number of mu bins")
+	flag.Float64Var(&maxs, "maxs", 200, "Maximum s value")
+	// Tuning flags
 	flag.IntVar(&nworkers, "nworkers", 1, "Number of workers")
 	flag.Float64Var(&meshsize, "meshsize", 50, "Mesh size")
-	flag.Float64Var(&subsample, "subfraction", 1.01, "Subsampling fraction")
-	flag.StringVar(&fn, "fn", "", "Filename")
+	flag.Float64Var(&subsample, "subsample", 1.01, "Subsampling fraction")
 	flag.StringVar(&cpuprof, "cpuprofile", "", "CPU Filename")
 	flag.Parse()
-
-	if fn == "" {
-		log.Fatal(errors.New("A filename must be specified"))
+	if Dfn == "" {
+		log.Fatal(errors.New("A data filename must be specified"))
+	}
+	if Rfn == "" {
+		log.Fatal(errors.New("A random filename must be specified"))
+	}
+	if outprefix == "" {
+		log.Fatal(errors.New("An output prefix must be specified"))
 	}
 
-	p, err := mesh.ReadParticles(fn, subsample)
-	boxmin, boxmax := p.MinMax()
-	fmt.Println("Read in Particles")
+	// Read in the particle data
+	pD, err := mesh.ReadParticles(Dfn, subsample)
+	boxDmin, boxDmax := pD.MinMax()
 	if err != nil {
 		log.Fatal(err)
 	}
-	m := mesh.New(p, meshsize, boxmin, boxmax)
-	fmt.Println("Mesh created")
+	fmt.Printf("Data read in from %s \n", Dfn)
+	pR, err := mesh.ReadParticles(Rfn, subsample)
+	boxRmin, boxRmax := pR.MinMax()
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("Data read in from %s \n", Rfn)
 
+	// Set up meshes	
+	boxmin := boxRmin.Min(boxDmin)
+	boxmax := boxRmax.Max(boxDmax)
+	mD := mesh.New(pD, meshsize, boxmin, boxmax)
+	mR := mesh.New(pR, meshsize, boxmin, boxmax)
+	fmt.Println("Meshes created....")
+
+	// Set up profiling if desired
 	if cpuprof != "" {
 		fp, err := os.Create(cpuprof)
 		if err != nil {
@@ -45,37 +78,38 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
+	var hfinal twopt.PairCounter
+
 	fmt.Println("Using nworkers=", nworkers)
 	fore := twopt.NewForeman(nworkers, func() twopt.PairCounter {
-		return twopt.PairCounter(twopt.NewSMuPairCounter(5, 5, 200))
+		return twopt.PairCounter(twopt.NewSMuPairCounter(Ns, Nmu, maxs))
 	})
-	c1 := m.LoopAll()
-	auto := true
+
+	// DD
+	t1 := time.Now()
+	fmt.Println("Starting DD....")
+	c1 := mD.LoopAll()
 	for g1 := range c1 {
-		c2 := m.LoopNear(g1.I, 200)
+		c2 := mD.LoopNear(g1.I, maxs)
 		for g2 := range c2 {
 			switch {
-			case !auto:
-				fore.SubmitJob(twopt.NewJob(g1, g2, 1))
-			case auto && (g1.N < g2.N):
+			case (g1.N < g2.N):
 				fore.SubmitJob(twopt.NewJob(g1, g2, 2))
-			case auto && (g1.N == g2.N):
+			case (g1.N == g2.N):
 				fore.SubmitJob(twopt.NewJob(g1, g2, 1))
 			}
 		}
 	}
 	fore.EndWork()
-
-	hfinal := fore.Workers[0].H
-	for i := 1; i < len(fore.Workers); i++ {
-		hfinal.Add(fore.Workers[i].H)
+	hfinal = fore.Summarize()
+	fmt.Printf("Time to complete DD = %s\n", time.Since(t1))
+	fout, err := os.Create(outprefix + "-DD.dat")
+	if err != nil {
+		log.Fatal(err)
 	}
+	hfinal.PPrint(fout)
+	fout.Close()
 
-	for i := 0; i < 5; i++ {
-		for j := 0; j < 5; j++ {
-			fmt.Print(hfinal.Get(i, j), " ")
-		}
-		fmt.Println()
-	}
 
+	_ = mR
 }

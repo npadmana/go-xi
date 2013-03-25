@@ -46,7 +46,7 @@ func ReadParticles(fn string, subsample float64) (ParticleArr, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("Expect to get nlines =", nlines)
+	fmt.Printf("Expecting to get %d nlines from %s (if not subsampled)...\n", nlines, fn)
 
 	// Allocate particle data
 	parr := make(ParticleArr, nlines)
@@ -59,7 +59,9 @@ func ReadParticles(fn string, subsample float64) (ParticleArr, error) {
 	defer ff.Close()
 	fbuf := bufio.NewReader(ff)
 
-	fmt.Println("Subsampling down by ", subsample)
+	if subsample < 1 {
+		fmt.Println("Subsampling down by ", subsample)
+	}
 	// Read loop
 	iline := 0
 	for ii := 0; ii < nlines; ii++ {
@@ -71,7 +73,7 @@ func ReadParticles(fn string, subsample float64) (ParticleArr, error) {
 			iline++
 		}
 	}
-	fmt.Println("Final size =", iline)
+	fmt.Printf("%d particles read in from %s\n", iline, fn)
 
 	return parr[0:iline], nil
 }
@@ -82,7 +84,6 @@ func (p ParticleArr) MinMax() (boxmin, boxmax Vector3D) {
 	for _, p1 := range p {
 		boxmin = boxmin.Min(p1.X)
 		boxmax = boxmax.Max(p1.X)
-		}
-		return
-		}
-
+	}
+	return
+}

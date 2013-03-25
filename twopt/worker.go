@@ -4,7 +4,6 @@ import (
 	"github.com/npadmana/go-xi/mesh"
 )
 
-
 type Job struct {
 	g1, g2 *mesh.GridPoint
 	scale  float64
@@ -78,4 +77,19 @@ func NewWorker(newpair func() PairCounter) (w *Worker) {
 		}
 	}(w)
 	return
+}
+
+func (f *Foreman) Summarize() PairCounter {
+	hfinal := f.Workers[0].H
+	for i := 1; i < len(f.Workers); i++ {
+		hfinal.Add(f.Workers[i].H)
+	}
+
+	return hfinal
+}
+
+func (f *Foreman) Reset() {
+	for i := 0; i < len(f.Workers); i++ {
+		f.Workers[i].H.Reset()
+	}
 }

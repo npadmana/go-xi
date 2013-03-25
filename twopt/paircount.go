@@ -1,7 +1,9 @@
 package twopt
 
 import (
+	"fmt"
 	"github.com/npadmana/go-xi/mesh"
+	"io"
 	"math"
 )
 
@@ -10,6 +12,8 @@ type PairCounter interface {
 	Count(mesh.ParticleArr, mesh.ParticleArr, float64)
 	Add(PairCounter)
 	Get(is, imu int) float64
+	PPrint(io.Writer) 
+	Reset()
 }
 
 // SMuPairCounter 
@@ -41,11 +45,11 @@ func (smu *SMuPairCounter) Count(p1, p2 mesh.ParticleArr, scale float64) {
 	n1 := len(p1)
 	n2 := len(p2)
 	var ip1, ip2 int
-	
-	invdmu := 1/smu.Dmu
-	invds := 1/smu.Ds
-	
-	maxs2 := smu.Maxs*smu.Maxs
+
+	invdmu := 1 / smu.Dmu
+	invds := 1 / smu.Ds
+
+	maxs2 := smu.Maxs * smu.Maxs
 
 	for ip1 = 0; ip1 < n1; ip1++ {
 		x1 = p1[ip1].X
@@ -61,7 +65,7 @@ func (smu *SMuPairCounter) Count(p1, p2 mesh.ParticleArr, scale float64) {
 			}
 			if s2 < maxs2 {
 				s1 = math.Sqrt(s2)
-				l1 = 1./math.Sqrt(s2*l2 + 1.e-15) // Actually, inverse 1/(s*l)
+				l1 = 1. / math.Sqrt(s2*l2+1.e-15) // Actually, inverse 1/(s*l)
 				mu = sl * l1
 				if mu < 0 {
 					mu = -mu
@@ -86,4 +90,29 @@ func (smu *SMuPairCounter) Add(src PairCounter) {
 			smu.Data[i] += val
 		}
 	}
+}
+
+func (smu *SMuPairCounter) Reset() {
+	for i := range smu.Data {
+		smu.Data[i] = 0
+	}
+}
+
+func (smu *SMuPairCounter) PPrint(ff io.Writer) {
+	for i := 0; i <= smu.Ns; i++ {
+		fmt.Fprintf(ff, "%.3f ", float64(i)*smu.Ds)
+	}
+	fmt.Fprintln(ff)
+	for i := 0; i <= smu.Nmu; i++ {
+		fmt.Fprintf(ff,"%.3f ", float64(i)*smu.Dmu)
+	}
+	fmt.Fprintln(ff)
+
+	for i := 0; i < smu.Ns; i++ {
+		for j := 0; j < smu.Nmu; j++ {
+			fmt.Fprintf(ff,"%25.15e ", smu.Data[i*smu.Nmu+j])
+		}
+		fmt.Fprintln(ff)
+	}
+
 }
