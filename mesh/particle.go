@@ -12,7 +12,6 @@ import (
 type Particle struct {
 	X utils.Vector3D
 	W float64
-	R, R2 float64
 }
 
 func (p *Particle) String() string {
@@ -68,8 +67,6 @@ func ReadParticles(fn string, subsample float64) ([]Particle, error) {
 			return nil, err
 		}
 		if rand.Float64() < subsample {
-			parr[iline].R = parr[iline].X.Norm()
-			parr[iline].R2 = parr[iline].R * parr[iline].R
 			iline++
 		}
 	}
