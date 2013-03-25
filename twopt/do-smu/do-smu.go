@@ -104,7 +104,7 @@ func main() {
 	fmt.Println("Mesh created")
 
 	if cpuprof != "" {
-		fp, err := os.Create("smu.prof")
+		fp, err := os.Create(cpuprof)
 		if err != nil {
 			log.Fatal(err)
 		}
