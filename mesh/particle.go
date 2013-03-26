@@ -65,12 +65,18 @@ func ReadParticles(fn string, subsample float64) (ParticleArr, error) {
 	// Read loop
 	iline := 0
 	for ii := 0; ii < nlines; ii++ {
+		// Read in the first four columns
 		_, err = fmt.Fscan(fbuf, &parr[iline].X[0], &parr[iline].X[1], &parr[iline].X[2], &parr[iline].W)
 		if err != nil {
 			return nil, err
 		}
 		if rand.Float64() < subsample {
 			iline++
+		}
+		// Now fast-forward to the end of the line, discarding the output.
+		_, err = fbuf.ReadBytes('\n')
+		if err != nil {
+			return nil, err
 		}
 	}
 	fmt.Printf("%d particles read in from %s\n", iline, fn)

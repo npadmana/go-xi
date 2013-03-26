@@ -53,9 +53,11 @@ func main() {
 		Ns, Nmu             int
 		maxs                float64
 		outprefix           string
+		help                bool
 	)
 
 	// Basic flags
+	flag.BoolVar(&help, "help", false, "Prints the help message and quits")
 	flag.StringVar(&Dfn, "dfn", "", "D filename")
 	flag.StringVar(&Rfn, "rfn", "", "D filename")
 	flag.StringVar(&outprefix, "outprefix", "", "Output prefix")
@@ -68,6 +70,10 @@ func main() {
 	flag.Float64Var(&subsample, "subsample", 1.01, "Subsampling fraction")
 	flag.StringVar(&cpuprof, "cpuprofile", "", "CPU Filename")
 	flag.Parse()
+	if help {
+		flag.Usage()
+		os.Exit(0)
+	}
 	if Dfn == "" {
 		log.Fatal(errors.New("A data filename must be specified"))
 	}
