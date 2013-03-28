@@ -12,6 +12,16 @@ import (
 	"time"
 )
 
+func sumOfWeights(m1 *mesh.Mesh) (sum float64) {
+	// Ensure that sum is really initialized, it should be, but old habits die hard
+	sum = 0
+
+	for _, p := range m1.Particles {
+		sum += p.W
+	}
+	return
+}
+
 func doOne(m1, m2 *mesh.Mesh, outfn string, Nmu, Ns int, maxs float64, auto bool, nworkers int) {
 	fore := twopt.NewForeman(nworkers, func() twopt.PairCounter {
 		return twopt.PairCounter(twopt.NewSMuPairCounter(Ns, Nmu, maxs))
@@ -123,5 +133,17 @@ func main() {
 	doOne(mD, mR, outprefix+"-DR.dat", Nmu, Ns, maxs, false, nworkers)
 	fmt.Println("Starting RR....")
 	doOne(mR, mR, outprefix+"-RR.dat", Nmu, Ns, maxs, true, nworkers)
+
+
+	// Print the auxiliary file
+	fout, err := os.Create(outprefix+"-norm.dat")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer fout.Close()
+	fmt.Fprintln(fout, "# Sum of weights in input files")
+	fmt.Fprintf(fout, "%s: %20.15e\n", Dfn, sumOfWeights(mD))
+	fmt.Fprintf(fout, "%s: %20.15e\n", Rfn, sumOfWeights(mR))
+	
 
 }
