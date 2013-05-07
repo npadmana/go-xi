@@ -3,3 +3,5 @@
 /gcc
 /.ptp-sync
 /.settings
+
+*.sublime-workspace
