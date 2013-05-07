@@ -1,0 +1,8 @@
+A CUDA-based version of the code; this is based on the previous version of the code, 
+but extended in ways to make it more CUDA friendly. 
+
+It also contains some basic CUDA wrapping, but these are very specific to this
+code.
+
+The CUDA code is intended to be build as a separate shared library, and not built 
+using the go tool.
