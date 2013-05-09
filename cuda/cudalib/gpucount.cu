@@ -17,30 +17,28 @@ void checkCUDAError(char *msg)
     }                         
 }
 
-void* allocDev(long nbytes) {
-	void *ptr;
-	cudaMalloc(&ptr, sizeof(nbytes);
-	return ptr;
+void allocDev(long nbytes, void **ptr) {
+	cudaMalloc(ptr, nbytes);
 }
 
 void freeDev(void *ptr) {
 	cudaFree(ptr);
 }
 
-int sizeof_f4() {
+int sizef4() {
 	return int(sizeof(float4));
 }
 
-int sizeof_ull() {
+int sizeull() {
 	return int(sizeof(unsigned long long));
 }
 
 void copyToDevice(void* dst, const void* src, long nbytes) {
-	cudaMemcpy(dst, src, nbytes,  cudaMemcpyHostToDevice)
+	cudaMemcpy(dst, src, nbytes,  cudaMemcpyHostToDevice);
 }
 
 void copyFromDevice(void* dst, const void* src, long nbytes) {
-	cudaMemcpy(dst, src, nbytes,  cudaMemcpyDeviceToHost)
+	cudaMemcpy(dst, src, nbytes,  cudaMemcpyDeviceToHost);
 }
 
 

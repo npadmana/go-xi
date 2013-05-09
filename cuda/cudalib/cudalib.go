@@ -15,47 +15,29 @@ import (
 )
 
 var (
-	sizef4  = C.sizeof_f4()
-	sizeull = C.sizeof_ull()
+	sizef4  = int(C.sizef4())
+	sizeull = int(C.sizeull())
 )
 
-// Float4
-type Float4 struct {
-	X, Y, Z, W float32
-}
+type Float4 [4]float32
 
 // Min implements f1 = f2 < f1 ? f2 : f1 componentwise
 func (f1 *Float4) Min(f2 Float4) {
-	if f2.X < f1.X {
-		f1.X = f2.X
-	}
-	if f2.Y < f1.Y {
-		f1.Y = f2.Y
-	}
-	if f2.Z < f1.Z {
-		f1.Z = f2.Z
-	}
-	if f2.W < f1.W {
-		f1.W = f2.W
+	for ii := 0; ii < 4; ii++ {
+		if f2[ii] < f1[ii] {
+			f1[ii] = f2[ii]
+		}
 	}
 }
 
 // Max implements f1 = f2 > f1 ? f2 : f1 componentwise
 func (f1 *Float4) Max(f2 Float4) {
-	if f2.X > f1.X {
-		f1.X = f2.X
-	}
-	if f2.Y > f1.Y {
-		f1.Y = f2.Y
-	}
-	if f2.Z > f1.Z {
-		f1.Z = f2.Z
-	}
-	if f2.W > f1.W {
-		f1.W = f2.W
+	for ii := 0; ii < 4; ii++ {
+		if f2[ii] > f1[ii] {
+			f1[ii] = f2[ii]
+		}
 	}
 }
-
 
 // Check error checks the last CUDA error; if an error occurs, it aborts.
 func CheckError(msg string) {
@@ -67,18 +49,17 @@ func CheckError(msg string) {
 // Device particle structure
 type DevParticle struct {
 	ptr   unsafe.Pointer
-	npart int32
+	npart int
 }
 
 // Allocate particle data
-func NewDevParticle(npart int32) *DevParticle {
-	if sizef4 != unsafe.Sizeof(Float4{}) {
+func NewDevParticle(npart int) *DevParticle {
+	if sizef4 != int(unsafe.Sizeof(Float4{})) {
 		panic("Incorrect sized float4")
 	}
-	if unsafe.Sizeof(
 	pp := new(DevParticle)
 	pp.npart = npart
-	pp.ptr = C.allocDev(C.long(npart * sizef4))
+	C.allocDev(C.long(npart*sizef4), &pp.ptr)
 	CheckError("Allocating particle data")
 	return pp
 }
@@ -92,24 +73,24 @@ func (pp *DevParticle) Free() {
 
 // CopyToDevice moves particle data onto the device
 func (pp *DevParticle) CopyToDevice(ff []Float4) {
-	C.copyToDevice(pp.ptr, unsafe.Pointer(&ff[0]), pp.npart*sizef4)
+	C.copyToDevice(pp.ptr, unsafe.Pointer(&ff[0]), C.long(pp.npart*sizef4))
 	CheckError("Error moving particle data to GPU")
 }
 
 // Histogram structure
 type DevHist struct {
 	ptr   unsafe.Pointer
-	nbins int32
+	nbins int
 }
 
 // Allocate histogram
-func NewDevHist(nbins int32) *DevHist {
-	if sizeull != unsafe.Sizeof(uint64{}) {
+func NewDevHist(nbins int) *DevHist {
+	if sizeull != int(unsafe.Sizeof(uint64(0))) {
 		panic("Incorrect sized unsigned long long")
 	}
 	h := new(DevHist)
 	h.nbins = nbins
-	h.ptr = C.allocDev(C.long(nbins * sizeull))
+	C.allocDev(C.long(nbins*sizeull), &h.ptr)
 	CheckError("Allocating histogram data")
 	return h
 }
@@ -124,6 +105,6 @@ func (h *DevHist) Free() {
 // Copy histogram back from device; the slice you send is what will 
 // be filled.
 func (h *DevHist) CopyFromDevice(h1 []uint64) {
-	C.copyFromDevice(unsafe.Pointer(&h1[0]),h.ptr,h.nbins*sizeull)
+	C.copyFromDevice(unsafe.Pointer(&h1[0]), h.ptr, C.long(h.nbins*sizeull))
 	CheckError("Error moving histogram data off device")
 }

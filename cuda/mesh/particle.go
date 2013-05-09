@@ -3,7 +3,7 @@ package mesh
 import (
 	"bufio"
 	"fmt"
-	"github.com/npadmana/go-xi/cudalib"
+	"github.com/npadmana/go-xi/cuda/cudalib"
 	"io"
 	"math/rand"
 	"os"
@@ -35,7 +35,7 @@ func countlines(fn string) (n int, err error) {
 	return n, nil
 }
 
-func ReadParticles(fn string, subsample float64) (ParticleArr, error) {
+func ReadParticles(fn string, subsample float32) (ParticleArr, error) {
 	// Get the number of lines and allocate
 	nlines, err := countlines(fn)
 	if err != nil {
@@ -61,11 +61,11 @@ func ReadParticles(fn string, subsample float64) (ParticleArr, error) {
 	iline := 0
 	for ii := 0; ii < nlines; ii++ {
 		// Read in the first four columns
-		_, err = fmt.Fscan(fbuf, &parr[iline].X, &parr[iline].Y, &parr[iline].Z, &parr[iline].W)
+		_, err = fmt.Fscan(fbuf, &parr[iline][0], &parr[iline][1], &parr[iline][2], &parr[iline][3])
 		if err != nil {
 			return nil, err
 		}
-		if rand.Float64() < subsample {
+		if rand.Float32() < subsample {
 			iline++
 		}
 		// Now fast-forward to the end of the line, discarding the output.
