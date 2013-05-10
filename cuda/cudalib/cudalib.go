@@ -108,3 +108,9 @@ func (h *DevHist) CopyFromDevice(h1 []uint64) {
 	C.copyFromDevice(unsafe.Pointer(&h1[0]), h.ptr, C.long(h.nbins*sizeull))
 	CheckError("Error moving histogram data off device")
 }
+
+// Copy histogram to device; the slice you send is copied over
+func (h *DevHist) CopyToDevice(h1 []uint64) {
+	C.copyToDevice(h.ptr, unsafe.Pointer(&h1[0]), C.long(h.nbins*sizeull))
+	CheckError("Error moving histogram data to device")
+}
