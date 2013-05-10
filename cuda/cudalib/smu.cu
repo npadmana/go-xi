@@ -24,8 +24,8 @@ __global__ void shared_smu_kernel
     float s2, l2, sl, s1, l1;
 
     // Strides -- we will distribute over both x1 and x2
-    stride1 = blockDim.x * gridDim.x;
-    stride2 = blockDim.y * gridDim.x;
+    stride1 = blockDim.y * gridDim.y;
+    stride2 = blockDim.x * gridDim.x;
 
 
     // Compute the number of histograms we need to do
@@ -39,16 +39,19 @@ __global__ void shared_smu_kernel
         rend = rstart + nr1;
 
         // zero histogram
-        ii = threadIdx.x;
-        while (ii < BUFHIST) {
-            _hist[ii] = 0ll;
-            ii += blockDim.x;
+        // For simplicity, only a few threads will participate
+        if (threadIdx.y == 0) {
+            ii = threadIdx.x;
+            while (ii < BUFHIST) {
+                _hist[ii] = 0ll;
+                ii += blockDim.x;
+            }
         }
         __syncthreads();
 
 
         // Start loop over first set of data
-        ii = threadIdx.y + blockIdx.x * blockDim.y + start1;
+        ii = threadIdx.y + blockIdx.y * blockDim.y + start1;
         while (ii < end1) {
             _x1 = x1[ii];
             jj = threadIdx.x + blockIdx.x * blockDim.x + start2;
@@ -103,12 +106,15 @@ __global__ void shared_smu_kernel
         __syncthreads();
 
         // Copy histogram 
-        ir = Nmu*rstart;
-        ii = threadIdx.x + threadIdx.y * blockDim.x + ir;
-        jj = Nmu*rend;
-        while (ii < jj) {
-            atomicAdd( (unsigned long long*) &hist[ii], _hist[ii-ir]);
-            ii += blockDim.x*blockDim.y;
+        // For simplicity, only a few threads will participate
+        if (threadIdx.y == 0) {
+            ir = Nmu*rstart;
+            ii = threadIdx.x + ir;
+            jj = Nmu*rend;
+            while (ii < jj) {
+                atomicAdd( (unsigned long long*) &hist[ii], _hist[ii-ir]);
+                ii += blockDim.x;
+            }
         }
         __syncthreads();
 
