@@ -129,9 +129,9 @@ int smu(void *p1, int start1, int end1,
     void *p2, int start2, int end2, 
     float scale, 
     int Nr, int Nmu, float invdr, void *hist, 
-    int nblocks, int dimx, int dimy) {
+    int nblock1, int nblock2, int dimx, int dimy) {
 
-    dim3 Nb(nblocks);
+    dim3 Nb(nblock1, nblock2);
     dim3 Nt(dimx, dimy);
 
     if (Nmu > BUFHIST) {

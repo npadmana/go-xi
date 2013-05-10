@@ -86,7 +86,7 @@ func (smu *SMuCudaPairCounter) PullFromDevice() {
 
 func (smu *SMuCudaPairCounter) Count(p1, p2 *DevParticle, lo1, hi1, lo2, hi2 int, fac float32) error {
 	ii := C.smu(p1.ptr, C.int(lo1), C.int(hi1), p2.ptr, C.int(lo2), C.int(hi2), C.float(fac*smu.IntScale),
-		C.int(smu.Ns), C.int(smu.Nmu), C.float(1/smu.Ds), smu.devh.ptr, 28, 16, 16)
+		C.int(smu.Ns), C.int(smu.Nmu), C.float(1/smu.Ds), smu.devh.ptr, 7, 4, 16, 32)
 	if ii != 0 {
 		return errors.New("An error occurred!")
 	}
