@@ -2,6 +2,7 @@ package mesh
 
 import (
 	"github.com/npadmana/go-xi/cuda/cudalib"
+	"github.com/npadmana/go-xi/cuda/particle"
 	"math"
 )
 
@@ -12,13 +13,13 @@ const (
 type Index3D [3]int
 
 type Mesh struct {
-	Particles   ParticleArr  // Storage for particle data -- size Nparticles
-	Npart       int          // Number of particles
-	Ndx         []int        // Storage for particle grid index -- size Nparticles
-	Dx          float32      // Grid spacing
-	Dim, Stride Index3D      // Grid dimensions and strides
-	Ngrid       int          // Number of grid points
-	Grid        []*GridPoint // Slice containing pointers to gridpoints with data
+	Particles   particle.ParticleArr // Storage for particle data -- size Nparticles
+	Npart       int                  // Number of particles
+	Ndx         []int                // Storage for particle grid index -- size Nparticles
+	Dx          float32              // Grid spacing
+	Dim, Stride Index3D              // Grid dimensions and strides
+	Ngrid       int                  // Number of grid points
+	Grid        []*GridPoint         // Slice containing pointers to gridpoints with data
 }
 
 type GridPoint struct {
@@ -27,7 +28,7 @@ type GridPoint struct {
 	Lo, Hi int
 }
 
-func New(p ParticleArr, dx float32, boxmin, boxmax cudalib.Float4) (m *Mesh) {
+func New(p particle.ParticleArr, dx float32, boxmin, boxmax cudalib.Float4) (m *Mesh) {
 	// Setup
 	m = new(Mesh)
 	m.Dx = dx
