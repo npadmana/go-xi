@@ -94,3 +94,38 @@ func (n *Node) Grow(minpart int, minbox float32, wg *sync.WaitGroup) {
 	go n.Right.Grow(minpart, minbox, wg)
 	// All done
 }
+
+// NodeList allows one to send and receive groups of nodes.
+type NodeList []*Node
+
+// MapDecision determines decision values
+type TreeDecision int
+
+const (
+	PRUNE    TreeDecision = iota // Prune the tree walk here
+	CONTINUE                     // Continue the tree walk 
+	EVALUATE                     // Don't continue the tree walk, but evaluate these nodes
+)
+
+// This makes decisions while walking the treee
+type TreeDecider func(n1, n2 *Node) TreeDecision
+
+// DualTreeMap walks two trees, checking to see what nodes match the criterion 
+// set by the decider. These are then put onto the channel for future processing
+// Again, this is done concurrently, so we send in a WaitGroup as well.
+func DualTreeMap(n1, n2 *Node, ff TreeDecider, out chan NodeList, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	switch ff(n1, n2) {
+	case PRUNE:
+	case CONTINUE:
+		{
+
+		}
+	case EVALUATE:
+		out <- NodeList{n1, n2}
+	default:
+		panic("Unknown decision type")
+	}
+
+}
