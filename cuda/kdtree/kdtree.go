@@ -30,7 +30,8 @@ func (p *particleSorter) Swap(i, j int) {
 }
 
 type Node struct {
-	Arr            particle.ParticleArr // Store the slice of the full array
+	Arr            particle.ParticleArr // Store the full array
+	Lo, Hi         int                  // Store the slice limits -- usual inclusive/exclusive interval [lo,hi)
 	Npart          int                  // Number of particles
 	BoxMin, BoxMax cudalib.Float4       // Really could be a 3 element array, but this is simpler 
 	Left, Right    *Node                // Pointers to node
@@ -39,14 +40,16 @@ type Node struct {
 }
 
 // NewNode returns a new root/leaf node, built from the particle data
-func NewNode(arr particle.ParticleArr, id int64) *Node {
+func NewNode(arr particle.ParticleArr, lo, hi int, id int64) *Node {
 	nn := new(Node)
 
 	// Some of these are unnecessary, but it's nice to be explicit
 	nn.Arr = arr
-	nn.Npart = len(nn.Arr)
+	nn.Lo = lo
+	nn.Hi = hi
+	nn.Npart = hi - lo
 	nn.IsLeaf = true
-	nn.BoxMin, nn.BoxMax = nn.Arr.MinMax()
+	nn.BoxMin, nn.BoxMax = (nn.Arr[lo:hi]).MinMax()
 	nn.Id = id
 
 	return nn
@@ -81,13 +84,13 @@ func (n *Node) Grow(minpart int, minbox float32, wg *sync.WaitGroup) {
 	}
 
 	// Sort on idim
-	ps := particleSorter{idim, n.Arr}
+	ps := particleSorter{idim, n.Arr[n.Lo:n.Hi]}
 	sort.Sort(&ps)
 
 	// Create left and right nodes
 	split := n.Npart/2 + 1
-	n.Left = NewNode(n.Arr[0:split], 2*n.Id)
-	n.Right = NewNode(n.Arr[split:n.Npart], 2*n.Id+1)
+	n.Left = NewNode(n.Arr, n.Lo, n.Lo+split, 2*n.Id)
+	n.Right = NewNode(n.Arr, n.Lo+split, n.Hi, 2*n.Id+1)
 	n.IsLeaf = false
 
 	// Spawn grow on both left and right

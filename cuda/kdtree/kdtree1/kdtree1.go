@@ -38,7 +38,7 @@ func main() {
 
 	// Build tree
 	t1 := time.Now()
-	root := kdtree.NewNode(p, 1)
+	root := kdtree.NewNode(p, 0, len(p), 1)
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go root.Grow(minpart, float32(minbox), &wg)
