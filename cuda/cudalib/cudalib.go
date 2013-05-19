@@ -114,3 +114,8 @@ func (h *DevHist) CopyToDevice(h1 []uint64) {
 	C.copyToDevice(h.ptr, unsafe.Pointer(&h1[0]), C.long(h.nbins*sizeull))
 	CheckError("Error moving histogram data to device")
 }
+
+// Synchronize device
+func DeviceSync() {
+	C.deviceSync()
+}

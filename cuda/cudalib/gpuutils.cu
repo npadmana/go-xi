@@ -41,5 +41,9 @@ void copyFromDevice(void* dst, const void* src, long nbytes) {
 	cudaMemcpy(dst, src, nbytes,  cudaMemcpyDeviceToHost);
 }
 
+void deviceSync() {
+    cudaDeviceSynchronize();
+}
+
 
 }

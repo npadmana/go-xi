@@ -12,6 +12,8 @@ int sizeull();
 void copyToDevice(void* dst, const void* src, long nbytes);
 void copyFromDevice(void* dst, const void* src, long nbytes);
 
+void deviceSync();
+
 int smu(void *p1, int start1, int end1, 
     void *p2, int start2, int end2, 
     float scale, 

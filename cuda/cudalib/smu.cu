@@ -5,7 +5,7 @@
 
 extern "C" {
 
-const int BUFHIST=1024;
+const int BUFHIST=4096;
 
 
 __global__ void shared_smu_kernel
