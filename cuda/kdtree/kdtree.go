@@ -3,6 +3,7 @@ package kdtree
 import (
 	"github.com/npadmana/go-xi/cuda/cudalib"
 	"github.com/npadmana/go-xi/cuda/particle"
+	"math"
 	"sort"
 	"sync"
 )
@@ -87,12 +88,38 @@ func (n *Node) Grow(minpart int, minbox float32, wg *sync.WaitGroup) {
 	split := n.Npart/2 + 1
 	n.Left = NewNode(n.Arr[0:split], 2*n.Id)
 	n.Right = NewNode(n.Arr[split:n.Npart], 2*n.Id+1)
+	n.IsLeaf = false
 
 	// Spawn grow on both left and right
 	wg.Add(2)
 	go n.Left.Grow(minpart, minbox, wg)
 	go n.Right.Grow(minpart, minbox, wg)
 	// All done
+}
+
+// NodeDist computes the minimum and maximum distances between nodes
+func (n *Node) NodeDist(n1 *Node) (mindist, maxdist float32) {
+	var x1, x2, dx1, dx2 float32
+	for ii := 0; ii < 3; ii++ {
+		x1 = (n.BoxMax[ii] + n.BoxMin[ii]) / 2
+		dx1 = (n.BoxMax[ii] - n.BoxMin[ii]) / 2
+		x2 = (n1.BoxMax[ii] + n1.BoxMin[ii]) / 2
+		dx2 = (n1.BoxMax[ii] - n1.BoxMin[ii]) / 2
+		x1 = x1 - x2
+		if x1 < 0 {
+			x1 = -x1
+		}
+		dx1 += dx2
+		dx2 = x1 - dx1
+		if dx2 > 0 {
+			mindist += dx2 * dx2
+		}
+		dx2 = x1 + dx1
+		maxdist += dx2 * dx2
+	}
+	mindist = float32(math.Sqrt(float64(mindist)))
+	maxdist = float32(math.Sqrt(float64(maxdist)))
+	return
 }
 
 // NodeList allows one to send and receive groups of nodes.
@@ -108,7 +135,36 @@ const (
 )
 
 // This makes decisions while walking the treee
-type TreeDecider func(n1, n2 *Node) TreeDecision
+type TreeDecider func(NodeList) TreeDecision
+
+// TreeMap walks a tree, checking to see what nodes match the criterion 
+// set by the decider. These are then put onto the channel for future processing
+// Again, this is done concurrently, so we send in a WaitGroup as well.
+func TreeMap(n1 *Node, ff TreeDecider, out chan NodeList, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	switch ff(NodeList{n1}) {
+	case PRUNE:
+		return
+	case CONTINUE:
+		{
+			// if n1 is a leaf
+			if n1.IsLeaf {
+				out <- NodeList{n1}
+				return
+			}
+
+			wg.Add(2)
+			go TreeMap(n1.Left, ff, out, wg)
+			go TreeMap(n1.Right, ff, out, wg)
+		}
+	case EVALUATE:
+		out <- NodeList{n1}
+	default:
+		panic("Unknown decision type")
+	}
+
+}
 
 // DualTreeMap walks two trees, checking to see what nodes match the criterion 
 // set by the decider. These are then put onto the channel for future processing
@@ -116,11 +172,42 @@ type TreeDecider func(n1, n2 *Node) TreeDecision
 func DualTreeMap(n1, n2 *Node, ff TreeDecider, out chan NodeList, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	switch ff(n1, n2) {
+	switch ff(NodeList{n1, n2}) {
 	case PRUNE:
+		return
 	case CONTINUE:
 		{
+			// Both are leaves, process
+			if n1.IsLeaf && n2.IsLeaf {
+				out <- NodeList{n1, n2}
+				return
+			}
 
+			// In all of these cases, we spawn two goroutines
+			wg.Add(2)
+
+			// n1 is a leaf
+			if n1.IsLeaf {
+				go DualTreeMap(n1, n2.Left, ff, out, wg)
+				go DualTreeMap(n1, n2.Right, ff, out, wg)
+				return
+			}
+
+			// n2 is a leaf
+			if n2.IsLeaf {
+				go DualTreeMap(n1.Left, n2, ff, out, wg)
+				go DualTreeMap(n1.Right, n2, ff, out, wg)
+				return
+			}
+
+			// Neither are leaves
+			if n1.Npart > n2.Npart {
+				go DualTreeMap(n1.Left, n2, ff, out, wg)
+				go DualTreeMap(n1.Right, n2, ff, out, wg)
+			} else {
+				go DualTreeMap(n1, n2.Left, ff, out, wg)
+				go DualTreeMap(n1, n2.Right, ff, out, wg)
+			}
 		}
 	case EVALUATE:
 		out <- NodeList{n1, n2}
@@ -128,4 +215,22 @@ func DualTreeMap(n1, n2 *Node, ff TreeDecider, out chan NodeList, wg *sync.WaitG
 		panic("Unknown decision type")
 	}
 
+}
+
+type RInterval struct {
+	Lo, Hi float32
+}
+
+func (r RInterval) DualNodeTest(nn NodeList) TreeDecision {
+	min, max := nn[0].NodeDist(nn[1])
+
+	// Prune decisions
+	if min > r.Hi {
+		return PRUNE
+	}
+	if max < r.Lo {
+		return PRUNE
+	}
+
+	return CONTINUE
 }
