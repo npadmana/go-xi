@@ -12,7 +12,7 @@ type PairCounter interface {
 	Count(mesh.ParticleArr, mesh.ParticleArr, float64)
 	Add(PairCounter)
 	Get(is, imu int) float64
-	PPrint(io.Writer) 
+	PPrint(io.Writer)
 	Reset()
 }
 
@@ -36,8 +36,13 @@ func NewSMuPairCounter(Ns, Nmu int, Maxs float64) (smu *SMuPairCounter) {
 	return
 }
 
-// PairCounter implements the inner pair counting loop.
+// Count doues the counting loop, calling the C function
 func (smu *SMuPairCounter) Count(p1, p2 mesh.ParticleArr, scale float64) {
+	smucount(p1, p2, smu, scale)
+}
+
+// PairCounter implements the inner pair counting loop.
+func (smu *SMuPairCounter) NativeCount(p1, p2 mesh.ParticleArr, scale float64) {
 	var s2, l2, sl, s1, l1, mu, w1 float64
 	var imu, is, i int
 	var x1 mesh.Vector3D
@@ -104,13 +109,13 @@ func (smu *SMuPairCounter) PPrint(ff io.Writer) {
 	}
 	fmt.Fprintln(ff)
 	for i := 0; i <= smu.Nmu; i++ {
-		fmt.Fprintf(ff,"%.3f ", float64(i)*smu.Dmu)
+		fmt.Fprintf(ff, "%.3f ", float64(i)*smu.Dmu)
 	}
 	fmt.Fprintln(ff)
 
 	for i := 0; i < smu.Ns; i++ {
 		for j := 0; j < smu.Nmu; j++ {
-			fmt.Fprintf(ff,"%25.15e ", smu.Data[i*smu.Nmu+j])
+			fmt.Fprintf(ff, "%25.15e ", smu.Data[i*smu.Nmu+j])
 		}
 		fmt.Fprintln(ff)
 	}

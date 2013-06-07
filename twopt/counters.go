@@ -23,7 +23,7 @@ func smucount(p1, p2 mesh.ParticleArr, s *SMuPairCounter, scale float64) {
 
 	C.smu(unsafe.Pointer(&p1[0]), unsafe.Pointer(&p2[0]),
 		C.int(n1), C.int(n2),
-		*C.double(&s.Data[0]), C.int(s.Nmu),
+		(*C.double)(&s.Data[0]), C.int(s.Nmu),
 		C.double(maxs2), C.double(invdmu), C.double(invds),
 		C.double(scale))
 
