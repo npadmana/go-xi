@@ -1,7 +1,8 @@
 package twopt
 
 /*
-#cgo CFLAGS: -I . 
+#cgo CFLAGS: -I. -O3 -ffast-math
+#cgo LDFLAGS: -lm 
 
 #include "counters.h"
 
