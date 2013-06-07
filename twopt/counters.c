@@ -13,7 +13,7 @@ void smu(void *v1, void *v2, int n1, int n2, double *data, int nmu, double maxs2
 	p2 = (Particle*) v2;
 
 	for (ip1=0; ip1 < n1; ++ip1) {
-		x1 = p1[ip1].x; y1 = p1[ip1.y]; z1 = p1[ip1.z]; 
+		x1 = p1[ip1].x; y1 = p1[ip1].y; z1 = p1[ip1].z; 
 		w1 = p1[ip1].w * scale;
 
 		for (ip2=0;ip2 < n2; ++ip2) {
@@ -46,8 +46,8 @@ void smu(void *v1, void *v2, int n1, int n2, double *data, int nmu, double maxs2
 			mu = sl*l1;
 			if (mu < 0) mu = -mu;
 
-			imu = int(mu*invdmu);
-			is = int(s1*invds);
+			imu = (int)mu*invdmu;
+			is = (int)s1*invds;
 			data[is*nmu + imu] += w1*p2[ip2].w;
 	
 		}
