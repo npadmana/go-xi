@@ -5,3 +5,5 @@
 /.settings
 
 *.sublime-workspace
+
+cuda/build
