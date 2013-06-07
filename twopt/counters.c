@@ -1,4 +1,5 @@
 #include <math.h>
+#include <stdio.h>
 
 typedef struct {
 	double x, y, z, w;
@@ -19,22 +20,22 @@ void smu(void *v1, void *v2, int n1, int n2, double *data, int nmu, double maxs2
 		for (ip2=0;ip2 < n2; ++ip2) {
 
 			// x
-			s1 = x1 - p2[ip1].x;
-			l1 = 0.5*(x1 - p2[ip1].x);
+			s1 = x1 - p2[ip2].x;
+			l1 = 0.5*(x1 + p2[ip2].x);
 			s2 = s1*s1;
 			l2 = l1*l1;
 			sl = s1*l1;
 
 			// y
-			s1 = y1 - p2[ip1].y;
-			l1 = 0.5*(y1 - p2[ip1].y);
+			s1 = y1 - p2[ip2].y;
+			l1 = 0.5*(y1 + p2[ip2].y);
 			s2 += s1*s1;
 			l2 += l1*l1;
 			sl += s1*l1;
 
 			// z 
-			s1 = z1 - p2[ip1].z;
-			l1 = 0.5*(z1 - p2[ip1].z);
+			s1 = z1 - p2[ip2].z;
+			l1 = 0.5*(z1 + p2[ip2].z);
 			s2 += s1*s1;
 			l2 += l1*l1;
 			sl += s1*l1;
@@ -46,8 +47,8 @@ void smu(void *v1, void *v2, int n1, int n2, double *data, int nmu, double maxs2
 			mu = sl*l1;
 			if (mu < 0) mu = -mu;
 
-			imu = (int)mu*invdmu;
-			is = (int)s1*invds;
+			imu = (int)(mu*invdmu);
+			is = (int)(s1*invds);
 			data[is*nmu + imu] += w1*p2[ip2].w;
 	
 		}
