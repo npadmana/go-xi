@@ -64,10 +64,12 @@ func main() {
 		maxs                float64
 		outprefix           string
 		help                bool
+		noRR                bool
 	)
 
 	// Basic flags
 	flag.BoolVar(&help, "help", false, "Prints the help message and quits")
+	flag.BoolVar(&noRR, "noRR", false, "Don't do the RR calculation")
 	flag.StringVar(&Dfn, "dfn", "", "D filename")
 	flag.StringVar(&Rfn, "rfn", "", "D filename")
 	flag.StringVar(&outprefix, "outprefix", "", "Output prefix")
@@ -76,7 +78,7 @@ func main() {
 	flag.Float64Var(&maxs, "maxs", 200, "Maximum s value")
 	// Tuning flags
 	flag.IntVar(&nworkers, "nworkers", 1, "Number of workers")
-	flag.Float64Var(&meshsize, "meshsize", 50, "Mesh size")
+	flag.Float64Var(&meshsize, "meshsize", -1, "Mesh size (defaults to maxs*1.01/2 if -ve)")
 	flag.Float64Var(&subsample, "subsample", 1.01, "Subsampling fraction")
 	flag.StringVar(&cpuprof, "cpuprofile", "", "CPU Filename")
 	flag.Parse()
@@ -92,6 +94,9 @@ func main() {
 	}
 	if outprefix == "" {
 		log.Fatal(errors.New("An output prefix must be specified"))
+	}
+	if meshsize < 0 {
+		meshsize = maxs * 1.01 / 2
 	}
 
 	// Read in the particle data
@@ -131,12 +136,13 @@ func main() {
 	doOne(mD, mD, outprefix+"-DD.dat", Nmu, Ns, maxs, true, nworkers)
 	fmt.Println("Starting DR....")
 	doOne(mD, mR, outprefix+"-DR.dat", Nmu, Ns, maxs, false, nworkers)
-	fmt.Println("Starting RR....")
-	doOne(mR, mR, outprefix+"-RR.dat", Nmu, Ns, maxs, true, nworkers)
-
+	if !noRR {
+		fmt.Println("Starting RR....")
+		doOne(mR, mR, outprefix+"-RR.dat", Nmu, Ns, maxs, true, nworkers)
+	}
 
 	// Print the auxiliary file
-	fout, err := os.Create(outprefix+"-norm.dat")
+	fout, err := os.Create(outprefix + "-norm.dat")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -144,6 +150,5 @@ func main() {
 	fmt.Fprintln(fout, "# Sum of weights in input files")
 	fmt.Fprintf(fout, "%s: %20.15e\n", Dfn, sumOfWeights(mD))
 	fmt.Fprintf(fout, "%s: %20.15e\n", Rfn, sumOfWeights(mR))
-	
 
 }
