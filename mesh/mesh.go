@@ -12,7 +12,7 @@ const (
 type Index3D [3]int
 
 type Mesh struct {
-	Particles   ParticleArr   // Storage for particle data -- size Nparticles
+	Particles   ParticleArr  // Storage for particle data -- size Nparticles
 	Npart       int          // Number of particles
 	Ndx         []int        // Storage for particle grid index -- size Nparticles
 	Dx          float64      // Grid spacing
@@ -28,7 +28,7 @@ type GridPoint struct {
 }
 
 func New(p ParticleArr, dx float64, boxmin, boxmax Vector3D) (m *Mesh) {
-	var x Vector3D 
+	var x Vector3D
 
 	// Setup
 	m = new(Mesh)
@@ -79,7 +79,18 @@ func (m *Mesh) LoopAll() chan *GridPoint {
 
 func (m *Mesh) LoopNear(p Index3D, dist float64) chan *GridPoint {
 	c := make(chan *GridPoint, GeneratorBuffer)
-	ndx := int(math.Ceil(dist/m.Dx)) + 2 // Is the one necessary?
+	// Compute the index to search over
+	ndx := int(math.Ceil(dist / m.Dx))
+
+	// Sanity checks and deal with degenerate case 
+	diff := float64(ndx)*m.Dx - dist
+	if diff < -1.e-2 {
+		panic("Failure in search radius")
+	}
+	if math.Abs(diff) < 1.e-2 {
+		ndx++
+	}
+
 	var imin, imax Index3D
 
 	for i, p1 := range p {
@@ -87,7 +98,7 @@ func (m *Mesh) LoopNear(p Index3D, dist float64) chan *GridPoint {
 		if imin[i] < 0 {
 			imin[i] = 0
 		}
-		imax[i] = p1 + ndx + 2 // Exclusive bound
+		imax[i] = p1 + ndx + 1 // Exclusive bound
 		if imax[i] > m.Dim[i] {
 			imax[i] = m.Dim[i]
 		}
