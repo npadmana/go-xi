@@ -1,0 +1,2 @@
+do-smu -dfn=test.dat -rfn=test.dat -ns=5 -nmu=5 -outprefix=test1 -nworkers=4
+do-smu -dfn=test.dat -rfn=test.dat -ns=5 -nmu=5 -outprefix=test2 -nworkers=1
